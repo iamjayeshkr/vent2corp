@@ -12,7 +12,8 @@ export type Recipient =
   | "coworker"
   | "junior"
   | "hr"
-  | "team";
+  | "team"
+  | "lead";
 
 export type Platform =
   | "whatsapp"
@@ -34,6 +35,11 @@ export interface TranslationResult {
   tone: Tone;
   intent: string;
   emotion: string;
+  metadata?: {
+    score?: number;
+    confidence?: number;
+    previewUrl?: string;
+  };
 }
 
 export interface TranslationRequest {
@@ -82,6 +88,7 @@ export const RECIPIENTS: { value: Recipient; label: string }[] = [
   { value: "junior", label: "Junior" },
   { value: "hr", label: "HR" },
   { value: "team", label: "Team" },
+  { value: "lead", label: "Team Lead" },
 ];
 
 export const PLATFORMS: { value: Platform; label: string }[] = [

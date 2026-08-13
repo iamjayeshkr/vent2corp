@@ -81,6 +81,7 @@ export function cleanAndFormatMessage(
           junior: "Hi",
           hr: "Dear HR Team",
           team: "Hi Team",
+          lead: "Hi Lead",
         };
         const salutation = salutations[recipient] || "Hi";
         body = `${salutation},\n\n${body}`;
@@ -96,6 +97,7 @@ export function cleanAndFormatMessage(
           junior: "Best,\n[Your Name]",
           hr: "Sincerely,\n[Your Name]",
           team: "Thanks,\n[Your Name]",
+          lead: "Thanks,\n[Your Name]",
         };
         const closing = closings[recipient] || "Best regards,\n[Your Name]";
         body = `${body}\n\n${closing}`;
