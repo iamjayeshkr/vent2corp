@@ -4,6 +4,21 @@ import type { TranslationRequest } from "@/types";
 
 export async function POST(request: Request) {
   try {
+    // Validate Access Key Authorization Header
+    const configuredKey = (process.env.APP_ACCESS_KEY || "corporate2026").trim();
+    const providedKey = (
+      request.headers.get("x-access-key") ||
+      request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      ""
+    ).trim();
+
+    if (configuredKey && providedKey !== configuredKey) {
+      return NextResponse.json(
+        { error: "Unauthorized: Access Passcode required to use vent2corp AI." },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as TranslationRequest;
 
     if (!body.text || typeof body.text !== "string") {

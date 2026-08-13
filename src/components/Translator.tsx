@@ -21,6 +21,7 @@ interface TranslatorProps {
   defaultRecipient: Recipient;
   defaultPlatform: Platform;
   onTranslate: (original: string, result: TranslationResult, tone: Tone, recipient: Recipient, platform: Platform) => void;
+  onRequireAuth?: () => void;
 }
 
 const SAMPLE_PROMPTS = [
@@ -35,6 +36,7 @@ export function Translator({
   defaultRecipient,
   defaultPlatform,
   onTranslate,
+  onRequireAuth,
 }: TranslatorProps) {
   const [input, setInput] = useState("");
   const [tone, setTone] = useState<Tone>(defaultTone);
@@ -50,11 +52,19 @@ export function Translator({
     setLoading(true);
     setError("");
     try {
+      const accessKey = localStorage.getItem("vent2corp-access-key") || "corporate2026";
       const res = await fetch("/api/translate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-key": accessKey,
+        },
         body: JSON.stringify({ text: input, tone, recipient, platform }),
       });
+      if (res.status === 401) {
+        if (onRequireAuth) onRequireAuth();
+        throw new Error("Access Key required to translate. Enter passcode to unlock.");
+      }
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Something went wrong");
@@ -67,7 +77,7 @@ export function Translator({
     } finally {
       setLoading(false);
     }
-  }, [input, tone, recipient, platform, onTranslate]);
+  }, [input, tone, recipient, platform, onTranslate, onRequireAuth]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -88,9 +98,13 @@ export function Translator({
     setLoading(true);
     setError("");
     try {
+      const accessKey = localStorage.getItem("vent2corp-access-key") || "corporate2026";
       const res = await fetch("/api/translate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-key": accessKey,
+        },
         body: JSON.stringify({
           text: input,
           tone,
@@ -100,6 +114,10 @@ export function Translator({
           previousOutput: result.message,
         }),
       });
+      if (res.status === 401) {
+        if (onRequireAuth) onRequireAuth();
+        throw new Error("Access Key required. Enter passcode to unlock.");
+      }
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Something went wrong");

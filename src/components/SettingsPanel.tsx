@@ -189,6 +189,38 @@ export function SettingsPanel({
               </Select>
             </div>
           </div>
+
+          <Separator className="opacity-60" />
+
+          {/* Security & Access Section */}
+          <div className="rounded-2xl border border-border/80 bg-muted/20 p-4 space-y-3">
+            <div className="space-y-1">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <Settings2 className="w-3.5 h-3.5" />
+                API Security & Access Key
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Manage passcode to protect Gemini API token consumption.
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-mono font-medium text-foreground block">
+                Saved Passcode
+              </label>
+              <input
+                type="password"
+                defaultValue={typeof window !== "undefined" ? localStorage.getItem("vent2corp-access-key") || "corporate2026" : ""}
+                onChange={(e) => {
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("vent2corp-access-key", e.target.value.trim());
+                  }
+                }}
+                className="w-full h-10 px-3 rounded-xl border border-border/80 bg-background/80 text-xs font-mono"
+                placeholder="Enter access key..."
+              />
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

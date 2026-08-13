@@ -7,6 +7,7 @@ import { HeroCanvas } from "@/components/canvas/HeroCanvas";
 import { Translator } from "@/components/Translator";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { AuthModal } from "@/components/AuthModal";
 import { Examples } from "@/sections/Examples";
 import { HowItWorks } from "@/sections/HowItWorks";
 import { Features } from "@/sections/Features";
@@ -32,6 +33,7 @@ import type {
 export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [settings, setSettings] = useState({
     theme: "system" as Theme,
@@ -98,6 +100,11 @@ export default function Home() {
     [settings]
   );
 
+  const handleAuthenticate = (key: string) => {
+    localStorage.setItem("vent2corp-access-key", key);
+    setAuthModalOpen(false);
+  };
+
   return (
     <div className="relative min-h-screen bg-background text-foreground selection:bg-emerald-500/20 selection:text-emerald-400">
       {/* Interactive 3D WebGL Background */}
@@ -115,6 +122,7 @@ export default function Home() {
           defaultRecipient={settings.defaultRecipient}
           defaultPlatform={settings.defaultPlatform}
           onTranslate={handleTranslate}
+          onRequireAuth={() => setAuthModalOpen(true)}
         />
         <Examples />
         <HowItWorks />
@@ -141,6 +149,12 @@ export default function Home() {
         defaultRecipient={settings.defaultRecipient}
         defaultPlatform={settings.defaultPlatform}
         onUpdate={handleUpdateSettings}
+      />
+
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        onAuthenticate={handleAuthenticate}
       />
     </div>
   );
