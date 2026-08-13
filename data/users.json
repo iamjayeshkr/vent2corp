@@ -16,9 +16,10 @@
   {
     "id": "usr_1786648933823_5quae9",
     "email": "iamjayeshkr@gmail.com",
-    "name": "Jayesh Kumar",
-    "passwordHash": "$2b$10$p.tSDdIU4ZLbM1bF7Goofe6dJsWuZYmXs9wC.n6eDSFRLef5XlIL.",
-    "createdAt": 1786648933823
+    "name": "Jayesh",
+    "passwordHash": "$2b$10$t7dtLkqQjufFEGydpRrEqOATchuQ31r1kHjl1MUOLSrhy7AQ8iYuq",
+    "createdAt": 1786648933823,
+    "emailVerified": true
   },
   {
     "id": "usr_1786649053803_hg07y4",
@@ -28,5 +29,14 @@
     "emailVerified": true,
     "otpExpiresAt": 1786649653803,
     "createdAt": 1786649053803
+  },
+  {
+    "id": "usr_1786649298944_0m6msb",
+    "email": "user_otp_1786649298871@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$YY.MW8.tXT5Q6bz.fB1xf.zF691TXGDgKMRKkvLfMlhapskEkSWfS",
+    "emailVerified": true,
+    "otpExpiresAt": 1786649898944,
+    "createdAt": 1786649298944
   }
 ]

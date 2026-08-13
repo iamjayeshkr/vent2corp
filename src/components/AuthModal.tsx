@@ -29,7 +29,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [debugOtp, setDebugOtp] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -73,10 +72,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
 
       if (data.requiresVerification) {
         setMode("verify_otp");
-        if (data.otpDebugCode) {
-          setDebugOtp(data.otpDebugCode);
-        }
-        setInfoMessage(`A 6-digit code has been sent to ${data.email || email}`);
+        setInfoMessage(data.message || `A 6-digit code has been sent to ${data.email || email}. Check your inbox.`);
         setLoading(false);
         return;
       }
@@ -108,10 +104,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to resend code.");
 
-      if (data.otpDebugCode) {
-        setDebugOtp(data.otpDebugCode);
-      }
-      setInfoMessage(data.message || "A new 6-digit code has been sent.");
+      setInfoMessage(data.message || "A new 6-digit code has been sent to your inbox.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resend code.");
     } finally {
@@ -124,7 +117,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
     setPassword("");
     setName("");
     setOtpCode("");
-    setDebugOtp(null);
     setError("");
     setInfoMessage("");
   };
@@ -183,16 +175,8 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
               <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono space-y-1">
                 <p className="font-bold">Enter 6-Digit Code</p>
                 <p className="text-muted-foreground text-[11px]">
-                  Verification code sent to <span className="text-foreground underline">{email}</span>.
+                  Verification code sent to <span className="text-foreground underline">{email}</span>. Please check your email inbox.
                 </p>
-                {debugOtp && (
-                  <div className="mt-2 pt-2 border-t border-emerald-500/20 flex items-center justify-between text-[11px]">
-                    <span className="text-muted-foreground">Dev OTP Code:</span>
-                    <span className="font-bold text-amber-400 tracking-widest text-sm bg-background/60 px-2 py-0.5 rounded border border-amber-500/30">
-                      {debugOtp}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-1.5">
@@ -338,7 +322,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
                 ) : (
                   <span className="flex items-center gap-2">
                     {mode === "login" ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                    {mode === "login" ? "Sign In & Continue" : "Send 6-Digit OTP Code"}
+                    {mode === "login" ? "Sign In & Continue" : "Send 6-Digit Verification Code"}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </span>
                 )}
@@ -349,7 +333,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
           <div className="p-3 rounded-xl border border-border/60 bg-muted/10 flex items-start gap-2.5 text-xs text-muted-foreground font-mono">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>
-              6-digit OTP verification ensures user identity and prevents unauthorized API token abuse.
+              Real 6-digit email verification ensures user identity and protects your Gemini API tokens.
             </span>
           </div>
         </div>

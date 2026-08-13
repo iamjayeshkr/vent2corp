@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/auth/db";
 import { hashPassword } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -40,15 +41,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Check for existing user
+    // 3. Check for existing verified user
     const existing = getUserByEmail(email);
-    if (existing) {
-      if (existing.emailVerified) {
-        return NextResponse.json(
-          { error: "An account with this email already exists." },
-          { status: 409 }
-        );
-      }
+    if (existing && existing.emailVerified) {
+      return NextResponse.json(
+        { error: "An account with this email already exists." },
+        { status: 409 }
+      );
     }
 
     // 4. Generate 6-digit OTP code & 10-min expiration
@@ -75,14 +74,17 @@ export async function POST(request: Request) {
       });
     }
 
-    // Log OTP code for local server verification
-    console.log(`[EMAIL OTP SENT] Email: ${user.email} | OTP Code: ${user.otpCode}`);
+    // 5. Dispatch Real SMTP Email
+    await sendVerificationEmail({
+      toEmail: user.email,
+      userName: user.name,
+      otpCode: user.otpCode!,
+    });
 
     return NextResponse.json({
       requiresVerification: true,
       email: user.email,
-      otpDebugCode: process.env.NODE_ENV !== "production" ? user.otpCode : undefined,
-      message: `A 6-digit verification code has been sent to ${user.email}.`,
+      message: `A 6-digit verification code has been sent to ${user.email}. Check your inbox.`,
     });
   } catch (error) {
     console.error("Signup error:", error);

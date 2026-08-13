@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserByEmail, updateUser } from "@/lib/auth/db";
 import { verifyPassword, signToken } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -51,14 +52,17 @@ export async function POST(request: Request) {
       user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
       updateUser(user);
 
-      console.log(`[EMAIL OTP VERIFY REQUIRED] Email: ${user.email} | OTP Code: ${user.otpCode}`);
+      await sendVerificationEmail({
+        toEmail: user.email,
+        userName: user.name,
+        otpCode: user.otpCode,
+      });
 
       return NextResponse.json(
         {
           requiresVerification: true,
           email: user.email,
-          otpDebugCode: process.env.NODE_ENV !== "production" ? user.otpCode : undefined,
-          error: "Email not verified. Enter the 6-digit verification code sent to your email.",
+          error: "Email not verified. A 6-digit verification code has been sent to your email.",
         },
         { status: 403 }
       );
