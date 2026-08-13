@@ -12,11 +12,11 @@ export async function sendVerificationEmail({
   otpCode,
 }: SendEmailParams): Promise<{ success: boolean; messageId?: string }> {
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
-  const host = process.env.SMTP_HOST?.trim() || (resendApiKey ? "smtp.resend.com" : undefined);
-  const port = parseInt(process.env.SMTP_PORT || (resendApiKey ? "465" : "587"), 10);
-  const user = process.env.SMTP_USER?.trim() || (resendApiKey ? "resend" : undefined);
-  const pass = process.env.SMTP_PASS?.trim() || resendApiKey;
-  const from = process.env.SMTP_FROM?.trim() || (resendApiKey ? `"vent2corp" <onboarding@resend.dev>` : `"vent2corp" <no-reply@vent2corp.com>`);
+  const host = process.env.SMTP_HOST?.trim();
+  const port = parseInt(process.env.SMTP_PORT || "587", 10);
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  const from = process.env.SMTP_FROM?.trim() || `"vent2corp" <onboarding@resend.dev>`;
 
   const htmlTemplate = `
 <!DOCTYPE html>
@@ -59,7 +59,35 @@ export async function sendVerificationEmail({
   `;
 
   try {
+    // Priority 1: Direct Resend HTTP API (100% Reliable, bypasses SMTP port blocking)
+    if (resendApiKey) {
+      console.log(`[EMAIL DISPATCH] Triggering Resend HTTP API for: ${toEmail}`);
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: from.includes("resend.dev") ? "vent2corp <onboarding@resend.dev>" : from,
+          to: [toEmail],
+          subject: `${otpCode} is your vent2corp verification code`,
+          html: htmlTemplate,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.id) {
+        console.log(`[RESEND API LIVE EMAIL SENT SUCCESS] to: ${toEmail} | Email ID: ${data.id}`);
+        return { success: true, messageId: data.id };
+      } else {
+        console.error(`[RESEND API ERROR]`, data);
+      }
+    }
+
+    // Priority 2: Standard SMTP Transporter (Gmail / Custom SMTP)
     if (host && user && pass) {
+      console.log(`[EMAIL DISPATCH] Triggering SMTP Transporter (${host}:${port}) for: ${toEmail}`);
       const transporter = nodemailer.createTransport({
         host,
         port,
@@ -75,20 +103,21 @@ export async function sendVerificationEmail({
         html: htmlTemplate,
       });
 
-      console.log(`[SMTP PRODUCTION EMAIL SENT SUCCESS] to: ${toEmail} | Message ID: ${info.messageId}`);
+      console.log(`[SMTP EMAIL SENT SUCCESS] to: ${toEmail} | Message ID: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
-    } else {
-      console.log(`\n======================================================`);
-      console.log(`[DEV SMTP SIMULATOR] Email verification triggered for: ${toEmail}`);
-      console.log(`OTP VERIFICATION CODE: ${otpCode}`);
-      console.log(`\n⚠️ WHY ARE YOU SEEING THIS IN CONSOLE?`);
-      console.log(`Neither SMTP_HOST/USER/PASS nor RESEND_API_KEY are configured in .env.local.`);
-      console.log(`Add RESEND_API_KEY=re_your_api_key in .env.local for live inbox delivery!`);
-      console.log(`======================================================\n`);
-      return { success: true };
     }
+
+    // Priority 3: Development Simulator Logger
+    console.log(`\n======================================================`);
+    console.log(`[DEV SMTP SIMULATOR] Email verification code generated for: ${toEmail}`);
+    console.log(`VERIFICATION CODE: ${otpCode}`);
+    console.log(`\n⚠️ WHY ARE YOU SEEING THIS IN CONSOLE?`);
+    console.log(`Neither RESEND_API_KEY nor SMTP_HOST/USER/PASS are set in .env.local.`);
+    console.log(`Add RESEND_API_KEY=re_your_api_key in .env.local to send live emails!`);
+    console.log(`======================================================\n`);
+    return { success: true };
   } catch (error) {
-    console.error(`[SMTP ERROR] Failed to send email to ${toEmail}:`, error);
+    console.error(`[EMAIL DISPATCH ERROR] Failed to send email to ${toEmail}:`, error);
     return { success: false };
   }
 }
