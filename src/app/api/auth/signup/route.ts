@@ -74,8 +74,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // 5. Dispatch Real SMTP Email
-    await sendVerificationEmail({
+    // 5. Dispatch Real Email (Resend / SMTP / Ethereal Live Inbox)
+    const emailResult = await sendVerificationEmail({
       toEmail: user.email,
       userName: user.name,
       otpCode: user.otpCode!,
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       requiresVerification: true,
       email: user.email,
+      previewUrl: emailResult.previewUrl,
       message: `A 6-digit verification code has been sent to ${user.email}. Check your inbox.`,
     });
   } catch (error) {
