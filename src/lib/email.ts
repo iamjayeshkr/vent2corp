@@ -11,11 +11,12 @@ export async function sendVerificationEmail({
   userName,
   otpCode,
 }: SendEmailParams): Promise<{ success: boolean; messageId?: string }> {
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || `"vent2corp Auth" <no-reply@vent2corp.com>`;
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  const host = process.env.SMTP_HOST?.trim() || (resendApiKey ? "smtp.resend.com" : undefined);
+  const port = parseInt(process.env.SMTP_PORT || (resendApiKey ? "465" : "587"), 10);
+  const user = process.env.SMTP_USER?.trim() || (resendApiKey ? "resend" : undefined);
+  const pass = process.env.SMTP_PASS?.trim() || resendApiKey;
+  const from = process.env.SMTP_FROM?.trim() || (resendApiKey ? `"vent2corp" <onboarding@resend.dev>` : `"vent2corp" <no-reply@vent2corp.com>`);
 
   const htmlTemplate = `
 <!DOCTYPE html>
@@ -74,16 +75,15 @@ export async function sendVerificationEmail({
         html: htmlTemplate,
       });
 
-      console.log(`[SMTP PRODUCTION EMAIL SENT] to: ${toEmail} | Message ID: ${info.messageId}`);
+      console.log(`[SMTP PRODUCTION EMAIL SENT SUCCESS] to: ${toEmail} | Message ID: ${info.messageId}`);
       return { success: true, messageId: info.messageId };
     } else {
-      // Development fallback logger
       console.log(`\n======================================================`);
-      console.log(`[DEV SMTP SIMULATOR] Real Email Dispatch Triggered`);
-      console.log(`TO: ${toEmail}`);
-      console.log(`SUBJECT: ${otpCode} is your vent2corp verification code`);
-      console.log(`VERIFICATION CODE: ${otpCode}`);
-      console.log(`(Configure SMTP_HOST, SMTP_USER, SMTP_PASS in .env.local for live inbox delivery)`);
+      console.log(`[DEV SMTP SIMULATOR] Email verification triggered for: ${toEmail}`);
+      console.log(`OTP VERIFICATION CODE: ${otpCode}`);
+      console.log(`\n⚠️ WHY ARE YOU SEEING THIS IN CONSOLE?`);
+      console.log(`Neither SMTP_HOST/USER/PASS nor RESEND_API_KEY are configured in .env.local.`);
+      console.log(`Add RESEND_API_KEY=re_your_api_key in .env.local for live inbox delivery!`);
       console.log(`======================================================\n`);
       return { success: true };
     }

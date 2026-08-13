@@ -38,5 +38,33 @@
     "emailVerified": true,
     "otpExpiresAt": 1786649898944,
     "createdAt": 1786649298944
+  },
+  {
+    "id": "usr_1786649377851_7vwgxo",
+    "email": "bittuofficial44@gmail.com",
+    "name": "Jayesh Kumar",
+    "passwordHash": "$2b$10$8F/B87NOvAJlrHC/0mGoWu2iannseK57PPsHp3AtpshF/UpSTy0VG",
+    "emailVerified": false,
+    "otpCode": "430713",
+    "otpExpiresAt": 1786649977745,
+    "createdAt": 1786649377851
+  },
+  {
+    "id": "usr_1786649509206_n0fmr0",
+    "email": "user_otp_1786649509135@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$ctE3rod1PZjoAm5Apnvfbe1tHiFYLPrkOMEXD5zQdP/htA2/Br6wa",
+    "emailVerified": true,
+    "otpExpiresAt": 1786650109205,
+    "createdAt": 1786649509206
+  },
+  {
+    "id": "usr_1786649778957_fxk5ng",
+    "email": "user_otp_1786649778886@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$HUMOBhOjdNif.v1VgGGfv.RGgmd97j1J1zBpKwGcSpm71MWhWuzRi",
+    "emailVerified": true,
+    "otpExpiresAt": 1786650378957,
+    "createdAt": 1786649778957
   }
 ]
