@@ -5,7 +5,11 @@ import { ArrowDown, Sparkles, Zap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import gsap from "gsap";
 
-export function Hero() {
+interface HeroProps {
+  onStartTranslating?: () => void;
+}
+
+export function Hero({ onStartTranslating }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
@@ -44,8 +48,12 @@ export function Hero() {
     return () => ctx.revert();
   }, []);
 
-  const scrollToTranslator = () => {
-    document.getElementById("translator")?.scrollIntoView({ behavior: "smooth" });
+  const handleStart = () => {
+    if (onStartTranslating) {
+      onStartTranslating();
+    } else {
+      document.getElementById("translator")?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
@@ -97,7 +105,7 @@ export function Hero() {
         >
           <Button
             size="lg"
-            onClick={scrollToTranslator}
+            onClick={handleStart}
             className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold bg-foreground text-background hover:opacity-90 shadow-lg shadow-foreground/10 transition-all hover:scale-105"
           >
             <Sparkles className="w-4 h-4 mr-2 text-amber-400" />
@@ -126,7 +134,7 @@ export function Hero() {
 
       {/* Down Scroll Trigger */}
       <button
-        onClick={scrollToTranslator}
+        onClick={handleStart}
         className="mt-16 sm:mt-20 animate-bounce text-muted-foreground hover:text-foreground transition-colors p-2 rounded-full border border-border/50 bg-background/40 backdrop-blur-sm"
         aria-label="Scroll down"
       >

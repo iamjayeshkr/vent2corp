@@ -5,5 +5,12 @@
     "name": "Unique Tester",
     "passwordHash": "$2b$10$MMF0pQjfUDWJBfqv.dsfVOZNgkHQdQtsWPNtQJdfWYS54jIKey1qC",
     "createdAt": 1786648483605
+  },
+  {
+    "id": "usr_1786648804544_yqoe0a",
+    "email": "user_1786648804473@vent2corp.com",
+    "name": "Unique Tester",
+    "passwordHash": "$2b$10$aglBEf89HxBeeFocOLrkKOo4PP8qA/ybKRRFNbMucR39y/RCyqxb.",
+    "createdAt": 1786648804544
   }
 ]

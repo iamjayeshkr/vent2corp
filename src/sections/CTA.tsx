@@ -1,11 +1,19 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Terminal } from "lucide-react";
 
 export function CTA() {
-  const scrollToTranslator = () => {
-    document.getElementById("translator")?.scrollIntoView({ behavior: "smooth" });
+  const router = useRouter();
+
+  const handleAction = () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("vent2corp_token") : null;
+    if (token) {
+      router.push("/app");
+    } else {
+      router.push("/?auth=required");
+    }
   };
 
   return (
@@ -29,7 +37,7 @@ export function CTA() {
 
         <Button
           size="lg"
-          onClick={scrollToTranslator}
+          onClick={handleAction}
           className="rounded-full px-9 h-14 text-base font-semibold bg-foreground text-background hover:scale-105 transition-all shadow-xl shadow-foreground/10"
         >
           <Sparkles className="w-4 h-4 mr-2 text-amber-400" />
