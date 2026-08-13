@@ -52,18 +52,24 @@ export function Translator({
     setLoading(true);
     setError("");
     try {
+      const jwtToken = localStorage.getItem("vent2corp_token");
       const accessKey = localStorage.getItem("vent2corp-access-key") || "corporate2026";
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "x-access-key": accessKey,
+      };
+      if (jwtToken) {
+        headers["Authorization"] = `Bearer ${jwtToken}`;
+      }
+
       const res = await fetch("/api/translate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-access-key": accessKey,
-        },
+        headers,
         body: JSON.stringify({ text: input, tone, recipient, platform }),
       });
       if (res.status === 401) {
         if (onRequireAuth) onRequireAuth();
-        throw new Error("Access Key required to translate. Enter passcode to unlock.");
+        throw new Error("Authentication required. Please sign in or create an account.");
       }
       if (!res.ok) {
         const data = await res.json();
@@ -98,13 +104,19 @@ export function Translator({
     setLoading(true);
     setError("");
     try {
+      const jwtToken = localStorage.getItem("vent2corp_token");
       const accessKey = localStorage.getItem("vent2corp-access-key") || "corporate2026";
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "x-access-key": accessKey,
+      };
+      if (jwtToken) {
+        headers["Authorization"] = `Bearer ${jwtToken}`;
+      }
+
       const res = await fetch("/api/translate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-access-key": accessKey,
-        },
+        headers,
         body: JSON.stringify({
           text: input,
           tone,
@@ -116,7 +128,7 @@ export function Translator({
       });
       if (res.status === 401) {
         if (onRequireAuth) onRequireAuth();
-        throw new Error("Access Key required. Enter passcode to unlock.");
+        throw new Error("Authentication required. Please sign in or create an account.");
       }
       if (!res.ok) {
         const data = await res.json();

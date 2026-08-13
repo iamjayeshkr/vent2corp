@@ -1,16 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, Moon, Sun, Settings, History, Terminal } from "lucide-react";
+import { Menu, Moon, Sun, Settings, History, Terminal, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import type { AuthUser } from "@/components/AuthModal";
 
 interface NavigationProps {
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  onOpenAuth: () => void;
+  user: AuthUser | null;
+  onLogout: () => void;
 }
 
-export function Navigation({ onOpenHistory, onOpenSettings }: NavigationProps) {
+export function Navigation({
+  onOpenHistory,
+  onOpenSettings,
+  onOpenAuth,
+  user,
+  onLogout,
+}: NavigationProps) {
   const [scrolled, setScrolled] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -79,25 +89,25 @@ export function Navigation({ onOpenHistory, onOpenSettings }: NavigationProps) {
         <nav className="hidden md:flex items-center gap-1 font-sans">
           <button
             onClick={() => scrollTo("translator")}
-            className="px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
           >
             Translate
           </button>
           <button
             onClick={() => scrollTo("examples")}
-            className="px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
           >
             Examples
           </button>
           <button
             onClick={() => scrollTo("how-it-works")}
-            className="px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
           >
             How it works
           </button>
           <button
             onClick={() => scrollTo("features")}
-            className="px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted"
           >
             Features
           </button>
@@ -128,6 +138,33 @@ export function Navigation({ onOpenHistory, onOpenSettings }: NavigationProps) {
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
           </Button>
+
+          {/* Auth Button / Profile Pill */}
+          {user ? (
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-border/80 font-mono">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <User className="w-3 h-3" />
+                {user.name.split(" ")[0]}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onLogout}
+                className="h-8 w-8 rounded-full text-muted-foreground hover:text-destructive"
+                title="Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={onOpenAuth}
+              className="ml-2 h-8 px-3 text-xs font-mono rounded-full bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 gap-1.5 transition-all"
+            >
+              <LogIn className="w-3 h-3" />
+              Sign In
+            </Button>
+          )}
         </nav>
 
         {/* Mobile Navigation */}
@@ -151,6 +188,24 @@ export function Navigation({ onOpenHistory, onOpenSettings }: NavigationProps) {
             />
             <SheetContent side="right" className="w-72">
               <div className="flex flex-col gap-1 mt-8 font-sans">
+                {user ? (
+                  <div className="p-3 mb-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono text-xs text-emerald-400 flex items-center justify-between">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5" /> {user.name}
+                    </span>
+                    <button onClick={onLogout} className="text-destructive hover:underline text-[11px]">
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => { onOpenAuth(); setMobileOpen(false); }}
+                    className="mb-2 h-10 w-full font-mono text-xs rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 gap-2"
+                  >
+                    <LogIn className="w-4 h-4" /> Sign In / Create Account
+                  </Button>
+                )}
+
                 <button
                   onClick={() => scrollTo("translator")}
                   className="text-left px-4 py-3 text-sm rounded-lg hover:bg-muted transition-colors font-medium"

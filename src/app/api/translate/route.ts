@@ -1,24 +1,40 @@
 import { NextResponse } from "next/server";
 import { createAIProvider } from "@/lib/ai/provider";
+import { verifyToken } from "@/lib/auth/jwt";
+import { checkRateLimit } from "@/lib/auth/rateLimit";
 import type { TranslationRequest } from "@/types";
 
 export async function POST(request: Request) {
   try {
-    // Validate Access Key Authorization Header
-    const configuredKey = (process.env.APP_ACCESS_KEY || "corporate2026").trim();
-    const providedKey = (
-      request.headers.get("x-access-key") ||
-      request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
-      ""
-    ).trim();
+    // 1. JWT Authentication Check
+    const authHeader = request.headers.get("authorization") || request.headers.get("x-auth-token") || "";
+    const accessKeyHeader = request.headers.get("x-access-key") || "";
 
-    if (configuredKey && providedKey !== configuredKey) {
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const decodedUser = token ? verifyToken(token) : null;
+
+    const configuredKey = (process.env.APP_ACCESS_KEY || "corporate2026").trim();
+    const isAccessKeyValid = accessKeyHeader.trim() === configuredKey;
+
+    if (!decodedUser && !isAccessKeyValid) {
       return NextResponse.json(
-        { error: "Unauthorized: Access Passcode required to use vent2corp AI." },
+        { error: "Unauthorized: Please log in or sign up to access vent2corp translation APIs." },
         { status: 401 }
       );
     }
 
+    // 2. User & IP Rate Limiting (15 translations / min)
+    const rateLimitId = decodedUser ? `usr_${decodedUser.userId}` : `ip_${request.headers.get("x-forwarded-for") || "anonymous"}`;
+    const rateCheck = checkRateLimit(rateLimitId, 15, 60 * 1000);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: `Rate limit exceeded (max 15 requests/min). Please try again in ${rateCheck.resetInSec}s.` },
+        { status: 429 }
+      );
+    }
+
+    // 3. Body Validation & Character Cap
     const body = (await request.json()) as TranslationRequest;
 
     if (!body.text || typeof body.text !== "string") {
@@ -43,6 +59,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // 4. Execute AI Translation Pipeline
     const provider = createAIProvider();
     const result = await provider.translate({
       text: trimmed,

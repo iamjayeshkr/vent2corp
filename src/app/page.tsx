@@ -7,7 +7,7 @@ import { HeroCanvas } from "@/components/canvas/HeroCanvas";
 import { Translator } from "@/components/Translator";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { AuthModal } from "@/components/AuthModal";
+import { AuthModal, type AuthUser } from "@/components/AuthModal";
 import { Examples } from "@/sections/Examples";
 import { HowItWorks } from "@/sections/HowItWorks";
 import { Features } from "@/sections/Features";
@@ -34,6 +34,7 @@ export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [settings, setSettings] = useState({
     theme: "system" as Theme,
@@ -43,10 +44,29 @@ export default function Home() {
   });
 
   useEffect(() => {
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       setHistory(getHistory());
       const s = getSettings();
       setSettings(s);
+
+      // Check stored auth session
+      const token = localStorage.getItem("vent2corp_token");
+      if (token) {
+        try {
+          const res = await fetch("/api/auth/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCurrentUser(data.user);
+          } else {
+            localStorage.removeItem("vent2corp_token");
+            localStorage.removeItem("vent2corp_user");
+          }
+        } catch {
+          // Keep offline state
+        }
+      }
     });
   }, []);
 
@@ -100,9 +120,17 @@ export default function Home() {
     [settings]
   );
 
-  const handleAuthenticate = (key: string) => {
-    localStorage.setItem("vent2corp-access-key", key);
+  const handleAuthSuccess = (token: string, user: AuthUser) => {
+    localStorage.setItem("vent2corp_token", token);
+    localStorage.setItem("vent2corp_user", JSON.stringify(user));
+    setCurrentUser(user);
     setAuthModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("vent2corp_token");
+    localStorage.removeItem("vent2corp_user");
+    setCurrentUser(null);
   };
 
   return (
@@ -113,6 +141,9 @@ export default function Home() {
       <Navigation
         onOpenHistory={() => setHistoryOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        user={currentUser}
+        onLogout={handleLogout}
       />
 
       <main className="relative z-10 flex-1">
@@ -154,7 +185,7 @@ export default function Home() {
       <AuthModal
         open={authModalOpen}
         onOpenChange={setAuthModalOpen}
-        onAuthenticate={handleAuthenticate}
+        onAuthSuccess={handleAuthSuccess}
       />
     </div>
   );
