@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserByEmail } from "@/lib/auth/db";
+import { getUserByEmail, updateUser } from "@/lib/auth/db";
 import { verifyPassword, signToken } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
 
@@ -44,7 +44,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Generate JWT token
+    // 5. Check Email Verification
+    if (!user.emailVerified) {
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otpCode = newOtp;
+      user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
+      updateUser(user);
+
+      console.log(`[EMAIL OTP VERIFY REQUIRED] Email: ${user.email} | OTP Code: ${user.otpCode}`);
+
+      return NextResponse.json(
+        {
+          requiresVerification: true,
+          email: user.email,
+          otpDebugCode: process.env.NODE_ENV !== "production" ? user.otpCode : undefined,
+          error: "Email not verified. Enter the 6-digit verification code sent to your email.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // 6. Generate JWT token
     const token = signToken({
       userId: user.id,
       email: user.email,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/auth/db";
-import { hashPassword, signToken } from "@/lib/auth/jwt";
+import { hashPassword } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
 
 export async function POST(request: Request) {
@@ -43,35 +43,46 @@ export async function POST(request: Request) {
     // 3. Check for existing user
     const existing = getUserByEmail(email);
     if (existing) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 }
-      );
+      if (existing.emailVerified) {
+        return NextResponse.json(
+          { error: "An account with this email already exists." },
+          { status: 409 }
+        );
+      }
     }
 
-    // 4. Hash password & create user
+    // 4. Generate 6-digit OTP code & 10-min expiration
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = Date.now() + 10 * 60 * 1000;
     const passwordHash = await hashPassword(password);
-    const user = createUser({
-      email,
-      name,
-      passwordHash,
-    });
 
-    // 5. Generate JWT token
-    const token = signToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-    });
+    let user;
+    if (existing && !existing.emailVerified) {
+      existing.passwordHash = passwordHash;
+      existing.name = name.trim();
+      existing.otpCode = otpCode;
+      existing.otpExpiresAt = otpExpiresAt;
+      const { updateUser } = await import("@/lib/auth/db");
+      user = updateUser(existing);
+    } else {
+      user = createUser({
+        email,
+        name,
+        passwordHash,
+        emailVerified: false,
+        otpCode,
+        otpExpiresAt,
+      });
+    }
+
+    // Log OTP code for local server verification
+    console.log(`[EMAIL OTP SENT] Email: ${user.email} | OTP Code: ${user.otpCode}`);
 
     return NextResponse.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
+      requiresVerification: true,
+      email: user.email,
+      otpDebugCode: process.env.NODE_ENV !== "production" ? user.otpCode : undefined,
+      message: `A 6-digit verification code has been sent to ${user.email}.`,
     });
   } catch (error) {
     console.error("Signup error:", error);

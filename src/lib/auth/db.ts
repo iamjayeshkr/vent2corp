@@ -6,6 +6,9 @@ export interface UserRecord {
   email: string;
   name: string;
   passwordHash: string;
+  emailVerified: boolean;
+  otpCode?: string;
+  otpExpiresAt?: number;
   createdAt: number;
 }
 
@@ -56,10 +59,25 @@ export function createUser(user: Omit<UserRecord, "id" | "createdAt">): UserReco
     email: lowerEmail,
     name: user.name.trim(),
     passwordHash: user.passwordHash,
+    emailVerified: user.emailVerified ?? false,
+    otpCode: user.otpCode,
+    otpExpiresAt: user.otpExpiresAt,
     createdAt: Date.now(),
   };
 
   users.push(newRecord);
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
   return newRecord;
+}
+
+export function updateUser(updatedUser: UserRecord): UserRecord {
+  ensureDbExists();
+  const users = getUsers();
+  const index = users.findIndex((u) => u.id === updatedUser.id);
+  if (index === -1) {
+    throw new Error("User not found for update");
+  }
+  users[index] = updatedUser;
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), "utf-8");
+  return updatedUser;
 }

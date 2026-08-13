@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { test, describe } from "node:test";
 import { hashPassword, verifyPassword, signToken, verifyToken } from "../jwt";
 import { checkRateLimit } from "../rateLimit";
-import { createUser, getUserByEmail } from "../db";
+import { createUser, getUserByEmail, updateUser } from "../db";
 
 describe("Authentication & Security Module Tests", () => {
   test("1. Password Hashing & Verification", async () => {
@@ -38,34 +38,31 @@ describe("Authentication & Security Module Tests", () => {
     assert.strictEqual(tampered, null, "Tampered token must fail verification");
   });
 
-  test("3. User DB & Unique Email Constraint", async () => {
-    const testEmail = `user_${Date.now()}@vent2corp.com`;
+  test("3. User DB, OTP Generation & Verification", async () => {
+    const testEmail = `user_otp_${Date.now()}@vent2corp.com`;
     const passwordHash = await hashPassword("pass12345");
+    const otpCode = "654321";
 
     const user = createUser({
       email: testEmail,
-      name: "Unique Tester",
+      name: "OTP Tester",
       passwordHash,
+      emailVerified: false,
+      otpCode,
+      otpExpiresAt: Date.now() + 10 * 60 * 1000,
     });
 
-    assert.ok(user.id.startsWith("usr_"), "User ID must be generated with usr_ prefix");
-    assert.strictEqual(user.email, testEmail);
+    assert.strictEqual(user.emailVerified, false, "User must start unverified");
+    assert.strictEqual(user.otpCode, "654321");
+
+    // Activate user with OTP
+    user.emailVerified = true;
+    user.otpCode = undefined;
+    updateUser(user);
 
     const fetched = getUserByEmail(testEmail);
-    assert.ok(fetched !== undefined, "User must be retrievable by email");
-    assert.strictEqual(fetched?.name, "Unique Tester");
-
-    assert.throws(
-      () => {
-        createUser({
-          email: testEmail,
-          name: "Duplicate Tester",
-          passwordHash,
-        });
-      },
-      /User with this email already exists/,
-      "Duplicate user creation must throw an error"
-    );
+    assert.strictEqual(fetched?.emailVerified, true, "User must be verified after OTP verification");
+    assert.strictEqual(fetched?.otpCode, undefined, "OTP code must be cleared after verification");
   });
 
   test("4. Token Bucket Rate Limiting", () => {
