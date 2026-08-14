@@ -10,7 +10,7 @@ export async function sendVerificationEmail({
   toEmail,
   userName,
   otpCode,
-}: SendEmailParams): Promise<{ success: boolean; messageId?: string; previewUrl?: string }> {
+}: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
   const host = process.env.SMTP_HOST?.trim();
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
@@ -59,9 +59,9 @@ export async function sendVerificationEmail({
   `;
 
   try {
-    // 1. Direct Resend HTTPS API
+    // 1. Direct Resend HTTPS API (Primary Engine)
     if (resendApiKey) {
-      console.log(`[EMAIL DISPATCH] Triggering Resend HTTP API for: ${toEmail}`);
+      console.log(`[RESEND EMAIL DISPATCH] Triggering Resend HTTP API for: ${toEmail}`);
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -81,13 +81,15 @@ export async function sendVerificationEmail({
         console.log(`[RESEND API LIVE EMAIL SENT SUCCESS] to: ${toEmail} | Email ID: ${data.id}`);
         return { success: true, messageId: data.id };
       } else {
+        const errorMsg = data.message || data.error?.message || "Resend API failed to deliver email.";
         console.error(`[RESEND API ERROR]`, data);
+        return { success: false, error: errorMsg };
       }
     }
 
-    // 2. Standard Custom SMTP Transporter (Gmail / SendGrid / Brevo)
+    // 2. Custom SMTP Transporter (Fallback if SMTP_HOST configured)
     if (host && user && pass) {
-      console.log(`[EMAIL DISPATCH] Triggering Custom SMTP Transporter (${host}:${port}) for: ${toEmail}`);
+      console.log(`[SMTP EMAIL DISPATCH] Triggering Custom SMTP (${host}:${port}) for: ${toEmail}`);
       const transporter = nodemailer.createTransport({
         host,
         port,
@@ -107,39 +109,10 @@ export async function sendVerificationEmail({
       return { success: true, messageId: info.messageId };
     }
 
-    // 3. Ethereal Real Test SMTP (Sends real email over SMTP & provides live web preview URL)
-    console.log(`[EMAIL DISPATCH] Generating Ethereal SMTP test account for live email delivery to: ${toEmail}...`);
-    const testAccount = await nodemailer.createTestAccount();
-    const testTransporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-
-    const info = await testTransporter.sendMail({
-      from: '"vent2corp" <onboarding@vent2corp.com>',
-      to: toEmail,
-      subject: `${otpCode} is your vent2corp verification code`,
-      text: `Your vent2corp verification code is: ${otpCode}. It expires in 10 minutes.`,
-      html: htmlTemplate,
-    });
-
-    const previewUrl = nodemailer.getTestMessageUrl(info) || undefined;
-    console.log(`\n======================================================`);
-    console.log(`[REAL TEST EMAIL DISPATCHED OVER SMTP] to: ${toEmail}`);
-    console.log(`OTP CODE: ${otpCode}`);
-    if (previewUrl) {
-      console.log(`LIVE WEB INBOX PREVIEW URL: ${previewUrl}`);
-    }
-    console.log(`======================================================\n`);
-
-    return { success: true, messageId: info.messageId, previewUrl };
+    console.error(`[EMAIL ERROR] RESEND_API_KEY is not configured in .env.local`);
+    return { success: false, error: "RESEND_API_KEY is missing in environment settings." };
   } catch (error) {
     console.error(`[EMAIL DISPATCH ERROR] Failed to send email to ${toEmail}:`, error);
-    return { success: false };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to send email." };
   }
 }

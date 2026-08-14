@@ -91,5 +91,33 @@
     "emailVerified": true,
     "otpExpiresAt": 1786651310960,
     "createdAt": 1786650710961
+  },
+  {
+    "id": "usr_1786650990374_4k3eos",
+    "email": "sharmapalavi72@gmail.com",
+    "name": "huhu",
+    "passwordHash": "$2b$10$PtLH0h6gQmy4HH7YHeAnv.jDE4v3lZd9L0om8voGoCyuf7WaEIGB2",
+    "emailVerified": false,
+    "otpCode": "983433",
+    "otpExpiresAt": 1786651848535,
+    "createdAt": 1786650990374
+  },
+  {
+    "id": "usr_1786671615054_c62f6b",
+    "email": "user_otp_1786671614981@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$6EWnJ//ul0lglPI.tThvvu8K8DYKWbPSJVyo.GvxUssn3b9eXgkFi",
+    "emailVerified": true,
+    "otpExpiresAt": 1786672215053,
+    "createdAt": 1786671615054
+  },
+  {
+    "id": "usr_1786671690276_lh9fqa",
+    "email": "user_otp_1786671690206@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$949rk98MtMdm7Nm.NzLjc./MA/0DFsKY1qLg2cvQg9IPZRgb1boy2",
+    "emailVerified": true,
+    "otpExpiresAt": 1786672290276,
+    "createdAt": 1786671690276
   }
 ]

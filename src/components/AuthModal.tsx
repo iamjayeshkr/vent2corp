@@ -29,7 +29,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -73,7 +72,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
 
       if (data.requiresVerification) {
         setMode("verify_otp");
-        if (data.previewUrl) setPreviewUrl(data.previewUrl);
         setInfoMessage(data.message || `A 6-digit code has been sent to ${data.email || email}. Check your inbox.`);
         setLoading(false);
         return;
@@ -177,20 +175,8 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
               <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono space-y-1">
                 <p className="font-bold">Enter 6-Digit Code</p>
                 <p className="text-muted-foreground text-[11px]">
-                  Verification code sent to <span className="text-foreground underline">{email}</span>. Please check your email inbox.
+                  Verification code sent via Resend to <span className="text-foreground underline">{email}</span>. Check your inbox.
                 </p>
-                {previewUrl && (
-                  <div className="pt-2">
-                    <a
-                      href={previewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors text-xs"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> View Live Ethereal Inbox Email →
-                    </a>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-1.5">
@@ -347,7 +333,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
           <div className="p-3 rounded-xl border border-border/60 bg-muted/10 flex items-start gap-2.5 text-xs text-muted-foreground font-mono">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>
-              Real 6-digit email verification ensures user identity and protects your Gemini API tokens.
+              Real 6-digit email verification via Resend protects your Gemini API tokens.
             </span>
           </div>
         </div>

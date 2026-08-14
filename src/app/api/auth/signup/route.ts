@@ -84,7 +84,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       requiresVerification: true,
       email: user.email,
-      previewUrl: emailResult.previewUrl,
       message: `A 6-digit verification code has been sent to ${user.email}. Check your inbox.`,
     });
   } catch (error) {
