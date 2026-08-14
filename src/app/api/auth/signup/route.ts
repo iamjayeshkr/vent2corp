@@ -74,12 +74,16 @@ export async function POST(request: Request) {
       });
     }
 
-    // 5. Dispatch Real Email (Resend / SMTP / Ethereal Live Inbox)
+    // 5. Dispatch Real Email via Resend / SMTP
     const emailResult = await sendVerificationEmail({
       toEmail: user.email,
       userName: user.name,
       otpCode: user.otpCode!,
     });
+
+    if (!emailResult.success) {
+      console.warn(`[SIGNUP WARNING] Verification email notification error: ${emailResult.error}`);
+    }
 
     return NextResponse.json({
       requiresVerification: true,

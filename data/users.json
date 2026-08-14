@@ -96,10 +96,10 @@
     "id": "usr_1786650990374_4k3eos",
     "email": "sharmapalavi72@gmail.com",
     "name": "huhu",
-    "passwordHash": "$2b$10$PtLH0h6gQmy4HH7YHeAnv.jDE4v3lZd9L0om8voGoCyuf7WaEIGB2",
+    "passwordHash": "$2b$10$cJgqxTLxNt.N8az9fRRcBuAZ76zH28nI9GL/ZDXUeZ2NYhcLeeGWy",
     "emailVerified": false,
-    "otpCode": "983433",
-    "otpExpiresAt": 1786651848535,
+    "otpCode": "861194",
+    "otpExpiresAt": 1786672825590,
     "createdAt": 1786650990374
   },
   {
@@ -119,5 +119,32 @@
     "emailVerified": true,
     "otpExpiresAt": 1786672290276,
     "createdAt": 1786671690276
+  },
+  {
+    "id": "usr_1786672140414_tr31ez",
+    "email": "user_otp_1786672140344@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$YZiFNnhhQr8rTkiGmnp86OPpm1HCLyP6Wl.yf80UVTP7qNxIM/nIe",
+    "emailVerified": true,
+    "otpExpiresAt": 1786672740414,
+    "createdAt": 1786672140414
+  },
+  {
+    "id": "usr_1786673471737_mnmnt1",
+    "email": "user_otp_1786673471667@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$pa/xWTrAhPLxccVPS0ojGef0QZOb/r/uGFVaKq1ASCJ0w3FAkyr62",
+    "emailVerified": true,
+    "otpExpiresAt": 1786674071737,
+    "createdAt": 1786673471737
+  },
+  {
+    "id": "usr_1786674023193_lzh2rk",
+    "email": "user_otp_1786674023121@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$DlwAyHT4DSSSREiwmTdjVO00zF9418fGbhNOxPuOYuQP.jPyDvEZy",
+    "emailVerified": true,
+    "otpExpiresAt": 1786674623192,
+    "createdAt": 1786674023193
   }
 ]

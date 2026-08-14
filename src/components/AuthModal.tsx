@@ -9,6 +9,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  auth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "@/lib/firebase/client";
 
 export interface AuthUser {
   id: string;
@@ -28,7 +35,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [otpCode, setOtpCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
@@ -41,49 +47,99 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
     setLoading(true);
 
     try {
-      if (mode === "verify_otp") {
-        const res = await fetch("/api/auth/verify-otp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otpCode }),
-        });
+      if (mode === "signup") {
+        // 1. Firebase Client SignUp
+        let userCredential;
+        try {
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        } catch {
+          // Fallback to backend API if Firebase API key is unconfigured
+          const res = await fetch("/api/auth/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, name }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to create account.");
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Invalid verification code.");
+          setMode("verify_otp");
+          setInfoMessage(data.message || `A verification code has been sent to ${email}. Check your inbox.`);
+          setLoading(false);
+          return;
         }
 
-        onAuthSuccess(data.token, data.user);
-        onOpenChange(false);
-        resetForm();
-        return;
-      }
+        const user = userCredential.user;
+        if (name) {
+          await updateProfile(user, { displayName: name });
+        }
+        await sendEmailVerification(user);
 
-      const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
-      const payload = mode === "signup" ? { email, password, name } : { email, password };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (data.requiresVerification) {
         setMode("verify_otp");
-        setInfoMessage(data.message || `A 6-digit code has been sent to ${data.email || email}. Check your inbox.`);
+        setInfoMessage(`Verification link sent via Firebase to ${email}. Please check your inbox and verify.`);
         setLoading(false);
         return;
       }
 
-      if (!res.ok) {
-        throw new Error(data.error || "Authentication failed.");
+      if (mode === "login") {
+        let userCredential;
+        try {
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const firebaseUser = userCredential.user;
+          const token = await firebaseUser.getIdToken();
+
+          onAuthSuccess(token, {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || email,
+            name: firebaseUser.displayName || name || "User",
+            createdAt: 0,
+          });
+          onOpenChange(false);
+          resetForm();
+          return;
+        } catch {
+          // Fallback to local JWT auth if Firebase fails or is unconfigured
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await res.json();
+          if (data.requiresVerification) {
+            setMode("verify_otp");
+            setInfoMessage(data.message || `Verification code sent to ${email}. Check your inbox.`);
+            setLoading(false);
+            return;
+          }
+
+          if (!res.ok) throw new Error(data.error || "Authentication failed.");
+
+          onAuthSuccess(data.token, data.user);
+          onOpenChange(false);
+          resetForm();
+          return;
+        }
       }
 
-      onAuthSuccess(data.token, data.user);
-      onOpenChange(false);
-      resetForm();
+      if (mode === "verify_otp") {
+        // Reload current Firebase user to check emailVerified status
+        if (auth.currentUser) {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified) {
+            const token = await auth.currentUser.getIdToken(true);
+            onAuthSuccess(token, {
+              id: auth.currentUser.uid,
+              email: auth.currentUser.email || email,
+              name: auth.currentUser.displayName || name || "User",
+              createdAt: 0,
+            });
+            onOpenChange(false);
+            resetForm();
+            return;
+          }
+        }
+        throw new Error("Email not verified yet. Please click the verification link in your email inbox and try again.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -91,22 +147,26 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
     }
   };
 
-  const handleResendOtp = async () => {
+  const handleResendEmail = async () => {
     setError("");
     setInfoMessage("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to resend code.");
-
-      setInfoMessage(data.message || "A new 6-digit code has been sent to your inbox.");
+      if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser);
+        setInfoMessage(`A fresh verification link has been sent via Firebase to ${email}.`);
+      } else {
+        const res = await fetch("/api/auth/resend-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to resend code.");
+        setInfoMessage(data.message || "A new verification code has been sent to your inbox.");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resend code.");
+      setError(err instanceof Error ? err.message : "Failed to resend email.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +176,6 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
     setEmail("");
     setPassword("");
     setName("");
-    setOtpCode("");
     setError("");
     setInfoMessage("");
   };
@@ -173,26 +232,10 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
           {mode === "verify_otp" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono space-y-1">
-                <p className="font-bold">Enter 6-Digit Code</p>
+                <p className="font-bold">Check Your Email Inbox</p>
                 <p className="text-muted-foreground text-[11px]">
-                  Verification code sent via Resend to <span className="text-foreground underline">{email}</span>. Check your inbox.
+                  A verification link was sent to <span className="text-foreground underline">{email}</span>. Click the link in your email, then press below to complete login.
                 </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-mono font-medium text-muted-foreground block">
-                  6-Digit Verification Code
-                </label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  required
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456"
-                  className="w-full h-12 px-4 text-center font-mono text-xl tracking-[0.5em] font-bold rounded-xl border border-border/80 bg-muted/20 text-foreground focus:outline-none focus:border-emerald-500/60 transition-all"
-                  autoFocus
-                />
               </div>
 
               {infoMessage && (
@@ -209,17 +252,17 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
 
               <Button
                 type="submit"
-                disabled={loading || otpCode.length !== 6}
+                disabled={loading}
                 className="w-full h-12 text-sm font-semibold rounded-xl bg-foreground text-background hover:scale-[1.01] transition-transform"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                    Verifying Code...
+                    Checking Verification...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    Verify & Unlock Account <ArrowRight className="w-4 h-4" />
+                    I&apos;ve Verified My Email <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
               </Button>
@@ -234,11 +277,11 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
                 </button>
                 <button
                   type="button"
-                  onClick={handleResendOtp}
+                  onClick={handleResendEmail}
                   disabled={loading}
                   className="text-emerald-400 hover:underline flex items-center gap-1"
                 >
-                  <RefreshCw className="w-3 h-3" /> Resend Code
+                  <RefreshCw className="w-3 h-3" /> Resend Link
                 </button>
               </div>
             </form>
@@ -322,7 +365,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
                 ) : (
                   <span className="flex items-center gap-2">
                     {mode === "login" ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                    {mode === "login" ? "Sign In & Continue" : "Send 6-Digit Verification Code"}
+                    {mode === "login" ? "Sign In & Continue" : "Send Verification Email"}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </span>
                 )}
@@ -333,7 +376,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
           <div className="p-3 rounded-xl border border-border/60 bg-muted/10 flex items-start gap-2.5 text-xs text-muted-foreground font-mono">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>
-              Real 6-digit email verification via Resend protects your Gemini API tokens.
+              Firebase Authentication protects your Gemini API tokens & delivers verified emails.
             </span>
           </div>
         </div>

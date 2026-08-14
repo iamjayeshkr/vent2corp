@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import fs from "node:fs";
+import path from "node:path";
 
 interface SendEmailParams {
   toEmail: string;
@@ -6,17 +8,37 @@ interface SendEmailParams {
   otpCode: string;
 }
 
+function getEnvVar(key: string): string | undefined {
+  const val = process.env[key];
+  if (val && val.trim().length > 0) {
+    return val.trim();
+  }
+  try {
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf8");
+      const match = content.match(new RegExp(`^${key}\\s*=\\s*(.*)$`, "m"));
+      if (match && match[1]) {
+        return match[1].trim().replace(/^["']|["']$/g, "");
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
+
 export async function sendVerificationEmail({
   toEmail,
   userName,
   otpCode,
 }: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const resendApiKey = process.env.RESEND_API_KEY?.trim();
-  const host = process.env.SMTP_HOST?.trim();
-  const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  const from = process.env.SMTP_FROM?.trim() || `"vent2corp" <onboarding@resend.dev>`;
+  const resendApiKey = getEnvVar("RESEND_API_KEY") || getEnvVar("SMTP_PASS");
+  const host = getEnvVar("SMTP_HOST");
+  const port = parseInt(getEnvVar("SMTP_PORT") || "587", 10);
+  const user = getEnvVar("SMTP_USER");
+  const pass = getEnvVar("SMTP_PASS");
+  const from = getEnvVar("SMTP_FROM") || `"vent2corp" <onboarding@resend.dev>`;
 
   const htmlTemplate = `
 <!DOCTYPE html>
