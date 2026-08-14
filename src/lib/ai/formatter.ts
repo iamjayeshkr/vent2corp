@@ -42,6 +42,8 @@ export function cleanAndFormatMessage(
   // 2. Remove AI meta-chatter prefix (e.g. "Here is the formal version:", "The employee's tone...")
   text = text
     .replace(/^(Here is|Here's|Below is|The rephrased|To maintain|The provided text|The employee's|A more formal version)[^:\n]*:\s*/i, "")
+    .replace(/^(Hi\s*-\s*)+/i, "")
+    .replace(/\s*-\s*\*Action:\*\s*.*$/i, "")
     .trim();
 
   // 3. Remove any leftover JSON syntax wrapper if model output was corrupted
@@ -49,7 +51,7 @@ export function cleanAndFormatMessage(
     text = text.slice(1, -1).trim();
   }
 
-  // 4. Platform-specific formatting
+  // 4. Platform-specific formatting (Natural, clean, sendable text without robotic fluff)
   switch (platform) {
     case "email": {
       // Check if message already has a Subject line
@@ -67,7 +69,7 @@ export function cleanAndFormatMessage(
         }
       } else {
         // Derive subject from intent or default
-        const cleanIntent = intent && intent !== "General communication" ? intent : "Workplace Schedule & Expectations Alignment";
+        const cleanIntent = intent && intent !== "General communication" ? intent : "Workplace Scope & Expectation Alignment";
         subject = cleanIntent;
       }
 
@@ -107,28 +109,19 @@ export function cleanAndFormatMessage(
     }
 
     case "linkedin": {
-      // Clean hashtags if already present to avoid duplication
       const textWithoutTags = text.replace(/#\w+\s*/g, "").trim();
-      return `${textWithoutTags}\n\n#WorkplaceCommunication #Leadership #Productivity #ProjectManagement`;
+      return `${textWithoutTags}\n\n#WorkplaceCommunication #Productivity #ProjectManagement`;
     }
 
     case "teams": {
-      const cleanText = text.replace(/^\*\*Workplace [^*]+\*\*\s*/i, "").trim();
-      return `**Workplace Alignment Request**\n\n${cleanText}`;
+      return text;
     }
 
     case "slack": {
-      // Ensure Slack markdown format without JSON noise
-      if (!text.includes("*") && !text.includes("-")) {
-        return `Hi - ${text}\n\n- *Action:* Please review when convenient.`;
-      }
       return text;
     }
 
     case "whatsapp": {
-      if (!text.includes("*") && !text.includes("_")) {
-        return `*Update:* ${text}`;
-      }
       return text;
     }
 

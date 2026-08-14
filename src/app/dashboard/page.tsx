@@ -11,6 +11,7 @@ import { ProBanner } from "@/components/upgrade/ProBanner";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AuthModal, type AuthUser } from "@/components/AuthModal";
+import { GlobalSearchModal } from "@/components/GlobalSearchModal";
 import {
   getHistory,
   addHistoryItem,
@@ -18,6 +19,7 @@ import {
   clearHistory,
   getSettings,
   saveSettings,
+  getFavorites,
 } from "@/lib/storage";
 import type {
   HistoryItem,
@@ -28,14 +30,15 @@ import type {
   Theme,
 } from "@/types";
 
-export default function AppWorkspace() {
+export default function DashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("dashboard");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("light");
 
   const [tone, setTone] = useState<Tone>("firm");
@@ -52,6 +55,7 @@ export default function AppWorkspace() {
   useEffect(() => {
     queueMicrotask(async () => {
       setHistory(getHistory());
+      setFavorites(getFavorites());
       const s = getSettings();
       setSettings(s);
       setTone(s.defaultTone || "firm");
@@ -171,8 +175,6 @@ export default function AppWorkspace() {
     <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row antialiased">
       {/* Mobile Top Navigation */}
       <MobileNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         user={currentUser}
         onOpenAuth={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
@@ -183,15 +185,14 @@ export default function AppWorkspace() {
       {/* Desktop Left Sidebar */}
       <div className="hidden lg:block">
         <Sidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
           historyCount={history.length}
-          favoritesCount={6}
+          favoritesCount={favorites.length}
           user={currentUser}
           onOpenAuth={() => setAuthModalOpen(true)}
           onLogout={handleLogout}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenHistory={() => setHistoryOpen(true)}
+          onOpenGlobalSearch={() => setGlobalSearchOpen(true)}
         />
       </div>
 
@@ -205,7 +206,7 @@ export default function AppWorkspace() {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Main Translation Workspace (8 Columns) */}
+          {/* Main Workspace (8 Columns) */}
           <div className="lg:col-span-8 space-y-6">
             <Translator
               defaultTone={settings.defaultTone}
@@ -244,37 +245,17 @@ export default function AppWorkspace() {
               loading={false}
               history={history}
               onSelectHistoryItem={handleSelectHistoryItem}
-              onViewAllHistory={() => setHistoryOpen(true)}
+              onViewAllHistory={() => router.push("/history")}
             />
           </div>
         </div>
       </div>
 
-      {/* Modals & Slide-overs */}
-      <HistoryPanel
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        history={history}
-        onDelete={handleDeleteHistory}
-        onReopen={handleReopenHistory}
-        onClear={handleClearHistory}
-      />
-
-      <SettingsPanel
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        theme={settings.theme}
-        defaultTone={settings.defaultTone}
-        defaultRecipient={settings.defaultRecipient}
-        defaultPlatform={settings.defaultPlatform}
-        onUpdate={handleUpdateSettings}
-      />
-
-      <AuthModal
-        open={authModalOpen}
-        onOpenChange={setAuthModalOpen}
-        onAuthSuccess={handleAuthSuccess}
-      />
+      {/* Modals & Global Search */}
+      <GlobalSearchModal open={globalSearchOpen} onOpenChange={setGlobalSearchOpen} />
+      <HistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} history={history} onDelete={handleDeleteHistory} onReopen={handleReopenHistory} onClear={handleClearHistory} />
+      <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} theme={settings.theme} defaultTone={settings.defaultTone} defaultRecipient={settings.defaultRecipient} defaultPlatform={settings.defaultPlatform} onUpdate={handleUpdateSettings} />
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} onAuthSuccess={handleAuthSuccess} />
     </div>
   );
 }

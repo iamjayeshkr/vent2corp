@@ -182,5 +182,41 @@
     "emailVerified": true,
     "otpExpiresAt": 1786680770433,
     "createdAt": 1786680170434
+  },
+  {
+    "id": "usr_1786680617983_8dqhul",
+    "email": "user_otp_1786680617912@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$qT/TVxsJdqjj1FmjXm8jGe0mHLHawybWy0uj8lbt6cHw5nIhrmdvm",
+    "emailVerified": true,
+    "otpExpiresAt": 1786681217983,
+    "createdAt": 1786680617983
+  },
+  {
+    "id": "usr_1786681055804_nx41al",
+    "email": "user_otp_1786681055733@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$jM4wwJ9fFULWPFJWOMopj.2fO9YSfpvA3xNPjLwp52LHqc71ZM4te",
+    "emailVerified": true,
+    "otpExpiresAt": 1786681655803,
+    "createdAt": 1786681055804
+  },
+  {
+    "id": "usr_1786681414392_yfx39g",
+    "email": "user_otp_1786681414322@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$FH3COpu1/7hq5OnIDW3pWOmnrnpz75aTm15XfYreaL8vpDLE/2SqC",
+    "emailVerified": true,
+    "otpExpiresAt": 1786682014392,
+    "createdAt": 1786681414392
+  },
+  {
+    "id": "usr_1786681600465_ldlojh",
+    "email": "user_otp_1786681600394@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$M0JGH26zJMgiA6.yFPBBYO1OMyn.U1VW9jnucs7NZ8EreJcww5qIi",
+    "emailVerified": true,
+    "otpExpiresAt": 1786682200464,
+    "createdAt": 1786681600465
   }
 ]

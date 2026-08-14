@@ -46,7 +46,7 @@ export function analyzeRawInput(input: string): ExtractedContext {
     technicalTerms.push(techMatch[0]);
   }
 
-  // Detect People / Roles (Jayesh, manager, client, biwi, team, lead, HR)
+  // Detect People / Roles (Jayesh, manager, client, lead, boss, coworker, junior, senior, HR)
   const peopleRegex = /\b(jayesh|manager|client|lead|boss|coworker|junior|senior|hr|director|vp|team|dev|developer)\b/gi;
   let peopleMatch;
   while ((peopleMatch = peopleRegex.exec(text)) !== null) {
@@ -54,6 +54,9 @@ export function analyzeRawInput(input: string): ExtractedContext {
   }
 
   // Analyze Complaint Vectors
+  if (lower.includes("kuch bhi") || lower.includes("soch toh le") || lower.includes("requiement") || lower.includes("bina soche")) {
+    complaints.push("unvetted requirement assignment without prior scope thought");
+  }
   if (lower.includes("bula") || lower.includes("call") || lower.includes("interrupt")) {
     complaints.push("frequent status calls and workflow interruptions");
   }
@@ -74,16 +77,16 @@ export function analyzeRawInput(input: string): ExtractedContext {
   const isContradictory = lower.includes("but actually") || (lower.includes("kal") && lower.includes("next week"));
 
   return {
-    situation: complaints.length > 0 ? complaints.join("; ") : "workplace task discussion",
-    emotion: lower.includes("bc") || lower.includes("bsdk") || lower.includes("saale") ? "high frustration / anger" : "neutral",
+    situation: complaints.length > 0 ? complaints.join("; ") : "workplace scope and requirement review",
+    emotion: lower.includes("bc") || lower.includes("bsdk") || lower.includes("saale") || lower.includes("chutiya") ? "high frustration / anger" : "neutral",
     people: Array.from(new Set(people)),
     facts: facts.length > 0 ? facts : [text],
     complaints: Array.from(new Set(complaints)),
     deadlines: Array.from(new Set(deadlines)),
     numbers: Array.from(new Set(numbers)),
     technicalTerms: Array.from(new Set(technicalTerms)),
-    desiredOutcome: "request priority alignment and focused execution blocks",
+    desiredOutcome: "request thorough scope review and priority alignment",
     isContradictory,
-    confidence: 0.92,
+    confidence: 0.94,
   };
 }

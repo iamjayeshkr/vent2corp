@@ -19,6 +19,16 @@ interface BenchmarkCase {
 const BENCHMARK_SUITE: BenchmarkCase[] = [
   {
     id: 1,
+    name: "Unvetted Requirement Scope Complaint",
+    input: "abe chutiya hai kya?? kuch bhi requiement bhej raha hai soch toh le ek baar",
+    tone: "professional",
+    recipient: "manager",
+    platform: "slack",
+    mustPreserve: ["unvetted", "scope"],
+    mustNotContain: ["chutiya", "abe", "Hi - ", "*Action:*"],
+  },
+  {
+    id: 2,
     name: "Gold Standard Jayesh Multi-Fact Rant",
     input: "tera marad hun kya saale jab dekho tab bula leta hai kuch bhi hua jayesh yeh dekhna bc itni toh biwi ko nhi khojta jitna mujhe bulata hai bsdk sudhar ja daily naya requirement yeh nayi woh nhi hua gand mein ghus ja bsdk",
     tone: "professional",

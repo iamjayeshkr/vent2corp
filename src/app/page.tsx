@@ -90,7 +90,7 @@ export default function Home() {
   const handleReopenHistory = (_item: HistoryItem) => {
     setHistoryOpen(false);
     if (currentUser) {
-      router.push("/app");
+      router.push("/dashboard");
     } else {
       setAuthModalOpen(true);
     }
@@ -107,7 +107,7 @@ export default function Home() {
 
   const handleStartTranslating = () => {
     if (currentUser) {
-      router.push("/app");
+      router.push("/dashboard");
     } else {
       setAuthModalOpen(true);
     }
@@ -118,7 +118,7 @@ export default function Home() {
     localStorage.setItem("vent2corp_user", JSON.stringify(user));
     setCurrentUser(user);
     setAuthModalOpen(false);
-    router.push("/app");
+    router.push("/dashboard");
   };
 
   const handleLogout = () => {
@@ -128,7 +128,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground selection:bg-emerald-500/20 selection:text-emerald-400">
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-purple-500/20 selection:text-purple-600">
       {/* Interactive 3D WebGL Background */}
       <HeroCanvas />
 

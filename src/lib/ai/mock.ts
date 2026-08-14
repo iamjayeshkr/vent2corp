@@ -18,6 +18,32 @@ interface PatternMatch {
 const PATTERN_MATCHES: PatternMatch[] = [
   {
     patterns: [
+      "kuch bhi requirement",
+      "kuch bhi requiement",
+      "soch toh le",
+      "soch to le",
+      "soch toh le ek baar",
+      "bina soche",
+      "chutiya hai kya",
+    ],
+    intent: "Unvetted requirement scope review",
+    emotion: "Frustrated",
+    responses: {
+      professional:
+        "I noticed the recent requirement updates seem a bit unvetted. Could we review and clarify the exact scope together before proceeding to ensure proper alignment?",
+      polite:
+        "I wanted to gently bring up that the latest requirements appear to need some further thought. Would it be possible to review them together before we start implementation?",
+      friendly:
+        "Hey! The latest requirement updates seem a bit uncalibrated. Mind if we take a quick pass together to lock down the exact scope before we build?",
+      firm: "The requirements being shared seem incomplete and haven't been thought through. We need to finalize the exact scope before any further work begins.",
+      diplomatic:
+        "I wanted to flag that the recent requirement changes appear somewhat uncalibrated. A quick review to clarify the scope before execution would help us deliver more effectively.",
+      "passive-aggressive":
+        "I noticed the requirements were sent over without initial scope validation. Just making sure we're taking a moment to refine them before starting development.",
+    },
+  },
+  {
+    patterns: [
       "marad",
       "biwi",
       "baap",
@@ -106,13 +132,13 @@ export class MockAIService implements AIProvider {
 
     // Dynamic Context Building
     const genericMessage = this.buildFactPreservedMessage(request, context);
-    const formattedMessage = cleanAndFormatMessage(genericMessage, request.platform, request.recipient, "Workplace communication");
+    const formattedMessage = cleanAndFormatMessage(genericMessage, request.platform, request.recipient, "Workplace scope review");
     const validation = validateMessage(request.text, formattedMessage, context);
 
     return {
       message: formattedMessage,
       tone: request.tone,
-      intent: "Workplace communication",
+      intent: "Workplace scope review",
       emotion: context.emotion,
       metadata: {
         score: validation.score,
@@ -137,20 +163,20 @@ export class MockAIService implements AIProvider {
       factDetails += ` involving ${context.technicalTerms.join(", ")}`;
     }
 
-    let coreTopic = "our current tasks and priorities";
+    let coreTopic = "refining the latest requirement scope to ensure it is thoroughly vetted";
     if (context.complaints.length > 0) {
       coreTopic = context.complaints.join(" and ");
-    } else if (lowerText.includes("requirement")) {
-      coreTopic = "the project requirements and scope alignment";
+    } else if (lowerText.includes("requirement") || lowerText.includes("requiement")) {
+      coreTopic = "reviewing and vetting the requirement scope before implementation";
     }
 
     const templates: Record<Tone, string> = {
-      professional: `I wanted to discuss ${coreTopic}${factDetails}. Could we align on the appropriate next steps?`,
-      polite: `I hope you're doing well. I wanted to gently bring up ${coreTopic}${factDetails}. Could we review this together?`,
-      friendly: `Hey! Just wanted to touch base on ${coreTopic}${factDetails}. Let me know when you're free to connect!`,
-      firm: `We need to address ${coreTopic}${factDetails} immediately to stay on track.`,
-      diplomatic: `I wanted to reach out regarding ${coreTopic}${factDetails}. It would be great to align on priorities.`,
-      "passive-aggressive": `I noticed ${coreTopic}${factDetails} hasn't been finalized yet. Following up to ensure we're aligned.`,
+      professional: `I noticed the latest update regarding ${coreTopic} seems a bit unvetted${factDetails}. Could we review and clarify the exact scope together before proceeding?`,
+      polite: `I wanted to gently bring up that the latest update regarding ${coreTopic} appears to need some further thought${factDetails}. Would it be possible to review them together?`,
+      friendly: `Hey! The latest updates on ${coreTopic} seem a bit uncalibrated${factDetails}. Mind if we take a quick pass together to lock down the exact scope?`,
+      firm: `The requirements regarding ${coreTopic} seem incomplete and haven't been thought through${factDetails}. We need to finalize the exact scope before any further work begins.`,
+      diplomatic: `I wanted to flag that the recent changes regarding ${coreTopic} appear somewhat uncalibrated${factDetails}. A quick review to clarify the scope before execution would help us deliver effectively.`,
+      "passive-aggressive": `I noticed ${coreTopic}${factDetails} was sent over without initial scope validation. Just making sure we're taking a moment to refine them before starting development.`,
     };
 
     return templates[tone] || templates["professional"];
