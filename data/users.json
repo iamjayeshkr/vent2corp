@@ -155,5 +155,23 @@
     "emailVerified": true,
     "otpExpiresAt": 1786679581021,
     "createdAt": 1786678981021
+  },
+  {
+    "id": "usr_1786679453431_4soaq3",
+    "email": "user_otp_1786679453361@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$AbwoYSYrdVcAwL6ylYy3i.XcYrkhVWiqL.xr/bnKxtelKIIm.MUFS",
+    "emailVerified": true,
+    "otpExpiresAt": 1786680053430,
+    "createdAt": 1786679453431
+  },
+  {
+    "id": "usr_1786679637086_3h5t4w",
+    "email": "user_otp_1786679636984@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$HtzNAVmSFSSShdVsx3gvLu0H1qogkFspVl.wKEg4HSCUViubcFXW.",
+    "emailVerified": true,
+    "otpExpiresAt": 1786680237084,
+    "createdAt": 1786679637086
   }
 ]

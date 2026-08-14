@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getUserByEmail, updateUser } from "@/lib/auth/db";
+import { getUserByEmail } from "@/lib/auth/db";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendFirebaseVerificationNotice } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const rateCheck = checkRateLimit(`resend_otp_${ip}`, 3, 60 * 1000);
     if (!rateCheck.allowed) {
       return NextResponse.json(
-        { error: `Please wait ${rateCheck.resetInSec}s before requesting another verification code.` },
+        { error: `Please wait ${rateCheck.resetInSec}s before requesting another verification email.` },
         { status: 429 }
       );
     }
@@ -30,23 +30,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Email is already verified." });
     }
 
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otpCode = newOtp;
-    user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
-    updateUser(user);
-
-    // Dispatch Real SMTP Email
-    await sendVerificationEmail({
+    const notice = await sendFirebaseVerificationNotice({
       toEmail: user.email,
       userName: user.name,
-      otpCode: user.otpCode,
     });
 
     return NextResponse.json({
-      message: `A new 6-digit verification code has been sent to ${user.email}. Check your inbox.`,
+      message: notice.message,
     });
   } catch (error) {
-    console.error("Resend OTP error:", error);
-    return NextResponse.json({ error: "Failed to resend code." }, { status: 500 });
+    console.error("Resend verification error:", error);
+    return NextResponse.json({ error: "Failed to resend verification email." }, { status: 500 });
   }
 }

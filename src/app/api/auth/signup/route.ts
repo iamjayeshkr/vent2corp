@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserByEmail, createUser } from "@/lib/auth/db";
 import { hashPassword } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendFirebaseVerificationNotice } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -50,17 +50,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Generate 6-digit OTP code & 10-min expiration
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = Date.now() + 10 * 60 * 1000;
+    // 4. Create User Record
     const passwordHash = await hashPassword(password);
-
     let user;
     if (existing && !existing.emailVerified) {
       existing.passwordHash = passwordHash;
       existing.name = name.trim();
-      existing.otpCode = otpCode;
-      existing.otpExpiresAt = otpExpiresAt;
       const { updateUser } = await import("@/lib/auth/db");
       user = updateUser(existing);
     } else {
@@ -69,26 +64,19 @@ export async function POST(request: Request) {
         name,
         passwordHash,
         emailVerified: false,
-        otpCode,
-        otpExpiresAt,
       });
     }
 
-    // 5. Dispatch Real Email via Resend / SMTP
-    const emailResult = await sendVerificationEmail({
+    // 5. Send Firebase Verification Notice
+    const notice = await sendFirebaseVerificationNotice({
       toEmail: user.email,
       userName: user.name,
-      otpCode: user.otpCode!,
     });
-
-    if (!emailResult.success) {
-      console.warn(`[SIGNUP WARNING] Verification email notification error: ${emailResult.error}`);
-    }
 
     return NextResponse.json({
       requiresVerification: true,
       email: user.email,
-      message: `A 6-digit verification code has been sent to ${user.email}. Check your inbox.`,
+      message: notice.message,
     });
   } catch (error) {
     console.error("Signup error:", error);

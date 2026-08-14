@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getUserByEmail, updateUser } from "@/lib/auth/db";
+import { getUserByEmail } from "@/lib/auth/db";
 import { verifyPassword, signToken } from "@/lib/auth/jwt";
 import { checkRateLimit } from "@/lib/auth/rateLimit";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendFirebaseVerificationNotice } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -47,22 +47,16 @@ export async function POST(request: Request) {
 
     // 5. Check Email Verification
     if (!user.emailVerified) {
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.otpCode = newOtp;
-      user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
-      updateUser(user);
-
-      await sendVerificationEmail({
+      const notice = await sendFirebaseVerificationNotice({
         toEmail: user.email,
         userName: user.name,
-        otpCode: user.otpCode,
       });
 
       return NextResponse.json(
         {
           requiresVerification: true,
           email: user.email,
-          error: "Email not verified. A 6-digit verification code has been sent to your email.",
+          message: notice.message,
         },
         { status: 403 }
       );
