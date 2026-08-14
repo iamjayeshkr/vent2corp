@@ -146,5 +146,14 @@
     "emailVerified": true,
     "otpExpiresAt": 1786674623192,
     "createdAt": 1786674023193
+  },
+  {
+    "id": "usr_1786678981021_0a7zzh",
+    "email": "user_otp_1786678980951@vent2corp.com",
+    "name": "OTP Tester",
+    "passwordHash": "$2b$10$byuhYKFQLyMKDAebbEQrf.BC.9AJYCxEcKsuVftKOHC5U6fXEwglK",
+    "emailVerified": true,
+    "otpExpiresAt": 1786679581021,
+    "createdAt": 1786678981021
   }
 ]
