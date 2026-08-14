@@ -7,6 +7,7 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
   type User,
+  type ActionCodeSettings,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -21,6 +22,15 @@ const firebaseConfig = {
 // Initialize Firebase Client App (Singleton)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+
+export async function sendVerifiedFirebaseEmail(user: User): Promise<void> {
+  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+  const actionCodeSettings: ActionCodeSettings = {
+    url: `${origin}/app?verified=true`,
+    handleCodeInApp: true,
+  };
+  return sendEmailVerification(user, actionCodeSettings);
+}
 
 export {
   createUserWithEmailAndPassword,

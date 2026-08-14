@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, LogIn, UserPlus, ShieldAlert, ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, RefreshCw } from "lucide-react";
+import { Lock, LogIn, UserPlus, ShieldAlert, ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, RefreshCw, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,7 +13,7 @@ import {
   auth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  sendEmailVerification,
+  sendVerifiedFirebaseEmail,
   updateProfile,
 } from "@/lib/firebase/client";
 
@@ -72,10 +72,10 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
         if (name) {
           await updateProfile(user, { displayName: name });
         }
-        await sendEmailVerification(user);
+        await sendVerifiedFirebaseEmail(user);
 
         setMode("verify_otp");
-        setInfoMessage(`Verification link sent via Firebase to ${email}. Please check your inbox and verify.`);
+        setInfoMessage(`Verification link sent to ${email}. Please check your Inbox (or Spam folder).`);
         setLoading(false);
         return;
       }
@@ -85,8 +85,16 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
         try {
           userCredential = await signInWithEmailAndPassword(auth, email, password);
           const firebaseUser = userCredential.user;
-          const token = await firebaseUser.getIdToken();
 
+          if (!firebaseUser.emailVerified) {
+            await sendVerifiedFirebaseEmail(firebaseUser);
+            setMode("verify_otp");
+            setInfoMessage(`Email not verified yet. A fresh verification link has been sent to ${email}. Check your Inbox / Spam folder.`);
+            setLoading(false);
+            return;
+          }
+
+          const token = await firebaseUser.getIdToken();
           onAuthSuccess(token, {
             id: firebaseUser.uid,
             email: firebaseUser.email || email,
@@ -138,7 +146,7 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
             return;
           }
         }
-        throw new Error("Email not verified yet. Please click the verification link in your email inbox and try again.");
+        throw new Error("Email not verified yet. Please click the link in your email inbox (or Spam folder) and try again.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -153,8 +161,8 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
     setLoading(true);
     try {
       if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser);
-        setInfoMessage(`A fresh verification link has been sent via Firebase to ${email}.`);
+        await sendVerifiedFirebaseEmail(auth.currentUser);
+        setInfoMessage(`A fresh verification link has been sent via Firebase to ${email}. Check your Inbox & Spam.`);
       } else {
         const res = await fetch("/api/auth/resend-otp", {
           method: "POST",
@@ -231,10 +239,12 @@ export function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps)
         <div className="py-6 space-y-6">
           {mode === "verify_otp" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono space-y-1">
-                <p className="font-bold">Check Your Email Inbox</p>
-                <p className="text-muted-foreground text-[11px]">
-                  A verification link was sent to <span className="text-foreground underline">{email}</span>. Click the link in your email, then press below to complete login.
+              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono space-y-2">
+                <p className="font-bold flex items-center gap-1.5">
+                  <Mail className="w-4 h-4 text-emerald-400" /> Check Your Email Inbox
+                </p>
+                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  A verification link was sent to <span className="text-foreground underline">{email}</span>. Click the link in your email (check <strong>Spam / Junk</strong> folder if not in Inbox), then press below to log in.
                 </p>
               </div>
 
