@@ -36,8 +36,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. User & IP Rate Limiting (15 translations / min)
+    // 2. User & IP Daily Rate Limiting (10 translations / day for Free Tier)
     const rateLimitId = userId ? `usr_${userId}` : `ip_${request.headers.get("x-forwarded-for") || "anonymous"}`;
+    const FREE_DAILY_LIMIT = parseInt(process.env.FREE_DAILY_LIMIT || "10", 10);
+    const dailyRateCheck = checkRateLimit(`daily_${rateLimitId}`, FREE_DAILY_LIMIT, 24 * 60 * 60 * 1000);
+
+    if (!dailyRateCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `Free tier daily limit reached (${FREE_DAILY_LIMIT}/${FREE_DAILY_LIMIT} translations used today). Upgrade to Pro for unlimited translations!`,
+          isDailyLimitReached: true,
+          dailyLimit: FREE_DAILY_LIMIT,
+          remaining: 0,
+          resetInSec: dailyRateCheck.resetInSec,
+        },
+        { status: 429 }
+      );
+    }
+
+    // 3. Short-Term Burst Protection (15 translations / min)
     const rateCheck = checkRateLimit(rateLimitId, 15, 60 * 1000);
 
     if (!rateCheck.allowed) {

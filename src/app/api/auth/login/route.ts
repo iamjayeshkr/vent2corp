@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       name: user.name,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token,
       user: {
         id: user.id,
@@ -78,6 +78,14 @@ export async function POST(request: Request) {
         createdAt: user.createdAt,
       },
     });
+    response.cookies.set("vent2corp_session", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
