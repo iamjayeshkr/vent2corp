@@ -1,6 +1,7 @@
 "use client";
 
 import { Sun, Moon, Bell, Sparkles } from "lucide-react";
+import Link from "next/link";
 import type { AuthUser } from "@/components/AuthModal";
 
 interface HeaderProps {
@@ -10,7 +11,7 @@ interface HeaderProps {
   onToggleTheme?: () => void;
 }
 
-export function Header({ user, onOpenAuth, theme = "light", onToggleTheme }: HeaderProps) {
+export function Header({ user, theme = "light", onToggleTheme }: HeaderProps) {
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -59,14 +60,13 @@ export function Header({ user, onOpenAuth, theme = "light", onToggleTheme }: Hea
         </button>
 
         {/* Upgrade to Pro Button */}
-        <button
-          type="button"
-          onClick={onOpenAuth}
+        <Link
+          href="/checkout"
           className="h-10 px-4 rounded-2xl bg-foreground text-background font-semibold text-xs flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
         >
           <span>Upgrade to Pro</span>
           <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-        </button>
+        </Link>
       </div>
     </header>
   );

@@ -1,145 +1,141 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ArrowDown, Sparkles, Zap, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import gsap from "gsap";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Play } from "lucide-react";
+import {
+  DoodleStar,
+  DoodleScribble,
+  DoodleUnderline,
+  DoodleCrown,
+  DoodleAnnotation,
+  DoodleRays,
+} from "@/components/ui/Doodles";
+import { RawToCorporate } from "@/components/RawToCorporate";
 
 interface HeroProps {
   onStartTranslating?: () => void;
 }
 
 export function Hero({ onStartTranslating }: HeroProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
+  const [sequenceStarted, setSequenceStarted] = useState(false);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      tl.fromTo(
-        badgeRef.current,
-        { opacity: 0, y: -20, scale: 0.9 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.7 }
-      )
-        .fromTo(
-          titleRef.current,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.9 },
-          "-=0.4"
-        )
-        .fromTo(
-          subtitleRef.current,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.8 },
-          "-=0.6"
-        )
-        .fromTo(
-          ctaRef.current,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.7 },
-          "-=0.5"
-        );
-    }, containerRef);
-
-    return () => ctx.revert();
+    const hero = document.getElementById("hero");
+    if (!hero) return;
+    const start = () => setSequenceStarted(true);
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      start();
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        start();
+        observer.disconnect();
+      }
+    }, { threshold: 0.15 });
+    observer.observe(hero);
+    return () => observer.disconnect();
   }, []);
 
-  const handleStart = () => {
-    if (onStartTranslating) {
-      onStartTranslating();
-    } else {
-      document.getElementById("translator")?.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const rawText = "bc ye manager roz nayi requirement de raha hai aur purani wali bhi complete nahi hui";
+  const corporateText = "I've noticed that new requirements are being introduced while some of the earlier work is still pending. Could we align on the current priorities and finalize the scope before proceeding further?";
 
   return (
-    <section
-      ref={containerRef}
-      className="relative flex flex-col items-center justify-center px-4 pt-32 pb-20 sm:pt-44 sm:pb-28 overflow-hidden z-10"
-    >
-      {/* Background Ambient Glow Orbs */}
-      <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-tr from-emerald-500/20 via-amber-500/20 to-purple-600/20 blur-[120px] rounded-full" />
+    <section id="hero" className={`hero-stage relative mx-auto max-w-[1440px] overflow-hidden bg-white px-4 pb-28 pt-32 select-none sm:px-6 sm:pt-40 lg:min-h-[800px] lg:px-10 lg:pb-36 ${sequenceStarted ? "hero-sequence-ready" : ""}`}>
+      <div className="relative z-10 lg:min-h-[620px]">
+        {/* Left Editorial Headline Column */}
+        <div className="relative z-20 space-y-6 text-left lg:w-[51%] lg:pt-12">
+          {/* Decorative Doodles Around Headline */}
+          <DoodleStar className="doodle-pop w-6 h-6 text-[#2563EB] absolute -top-8 left-0" />
+          <DoodleCrown className="w-8 h-8 text-amber-500 absolute -top-10 right-12 hidden sm:block" />
+          <DoodleRays className="w-10 h-10 text-yellow-400 absolute -top-4 left-28 hidden sm:block opacity-80" />
 
-      <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
-        {/* Status Badge */}
-        <div
-          ref={badgeRef}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-md mb-8 text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          {/* Uppercase Eyebrow */}
+          <span className="editorial-label block">
+            FOR PEOPLE WHO HAVE THOUGHTS THEY PROBABLY SHOULDN&apos;T SEND
           </span>
-          AI Workplace Translation 2.0 · Powered by Gemini & Qwen 2.5
+
+          {/* Massive Display Typography */}
+          <h1 className="hero-heading font-display text-gray-950">
+            SAY WHAT YOU
+            <br />
+            ACTUALLY MEAN.
+            <br />
+            <span className="desktop-blue-note text-[#2563EB]">WE&apos;LL MAKE IT</span>
+            <br />
+            <span className="desktop-blue-note relative inline-block text-[#2563EB]">
+              CORPORATE.
+              <DoodleUnderline className="doodle-draw absolute -bottom-3 left-0 w-full h-5 text-[#FACC15]" />
+            </span>
+          </h1>
+
+          {/* Small Scribble Doodle */}
+          <DoodleScribble className="w-16 h-4 text-pink-500" />
+          <DoodleAnnotation className="hidden sm:block absolute -left-2 -bottom-9 text-[#2563EB]" rotation={-4} size="1.1rem">
+            say it how it happened
+          </DoodleAnnotation>
+
+          {/* Description */}
+          <p className="text-sm sm:text-base text-gray-700 font-sans leading-relaxed max-w-md">
+            Write the message exactly how you&apos;re thinking it.<br />
+            Hinglish. Anger. Frustration. Confusion. Whatever.<br />
+            <span className="text-gray-950">vent2corp keeps the meaning and fixes the delivery.</span>
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <Link
+              href="/new"
+              onClick={onStartTranslating}
+              className="cta-primary h-14 px-8 rounded-xl text-gray-950 font-extrabold text-sm flex items-center justify-center gap-2"
+            >
+              <span>START VENTING</span>
+              <ArrowRight className="w-4 h-4 text-gray-950" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+              className="cta-secondary h-14 px-6 rounded-xl text-gray-950 font-extrabold text-sm flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-gray-950 text-gray-950" />
+              <span>SEE HOW IT WORKS</span>
+            </button>
+          </div>
+
+          {/* Desktop trust points stay beside the composition; mobile continues the story below it. */}
+          <div className="hidden pt-4 lg:flex lg:flex-wrap lg:items-center lg:gap-x-5 lg:gap-y-2 text-xs font-bold text-gray-800 font-sans">
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">✓</span> HINGLISH FRIENDLY
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">✓</span> NO CORPORATE JARGON
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">✓</span> MEANING PRESERVED
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">✓</span> READY TO SEND
+            </span>
+          </div>
         </div>
 
-        {/* Hero Title */}
-        <h1
-          ref={titleRef}
-          className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6"
-        >
-          Say what you <span className="underline decoration-emerald-400/60 decoration-wavy decoration-2">actually mean.</span>
-          <br />
-          <span className="bg-gradient-to-r from-emerald-400 via-amber-400 to-purple-400 bg-clip-text text-transparent">
-            We&apos;ll make it corporate.
-          </span>
-        </h1>
-
-        {/* Subtitle */}
-        <p
-          ref={subtitleRef}
-          className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed font-normal"
-        >
-          Turn your unfiltered thoughts, Hinglish vents, and raw frustration into
-          polished workplace messages without losing your true intent.
-        </p>
-
-        {/* CTAs */}
-        <div
-          ref={ctaRef}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
-        >
-          <Button
-            size="lg"
-            onClick={handleStart}
-            className="w-full sm:w-auto rounded-full px-8 h-14 text-base font-semibold bg-foreground text-background hover:opacity-90 shadow-lg shadow-foreground/10 transition-all hover:scale-105"
-          >
-            <Sparkles className="w-4 h-4 mr-2 text-amber-400" />
-            Start Translating
-          </Button>
-          <button
-            onClick={() => document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" })}
-            className="w-full sm:w-auto px-6 h-14 rounded-full border border-border bg-background/50 backdrop-blur-sm text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2"
-          >
-            <Zap className="w-4 h-4 text-emerald-400" />
-            See Live Examples
-          </button>
-        </div>
-
-        {/* Trust Badges */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground font-mono">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" /> HR Approved
-          </span>
-          <span>·</span>
-          <span>Zero Corporate Jargon Bloat</span>
-          <span>·</span>
-          <span>Platform Specific Rules</span>
+        {/* Right Side Visual Collage */}
+        <div className="relative pt-16 lg:absolute lg:right-0 lg:top-24 lg:w-[46%] lg:pt-0">
+          <RawToCorporate
+            variant="hero"
+            rawText={rawText}
+            corporateText={corporateText}
+            tone="meaning preserved"
+          />
+          <div className="mobile-hero-trust pt-10 text-xs font-bold text-gray-800 font-sans lg:hidden">
+            <span><b>✓</b> HINGLISH FRIENDLY</span>
+            <span><b>✓</b> MEANING PRESERVED</span>
+            <span><b>✓</b> READY TO SEND</span>
+          </div>
         </div>
       </div>
-
-      {/* Down Scroll Trigger */}
-      <button
-        onClick={handleStart}
-        className="mt-16 sm:mt-20 animate-bounce text-muted-foreground hover:text-foreground transition-colors p-2 rounded-full border border-border/50 bg-background/40 backdrop-blur-sm"
-        aria-label="Scroll down"
-      >
-        <ArrowDown className="w-5 h-5" />
-      </button>
     </section>
   );
 }

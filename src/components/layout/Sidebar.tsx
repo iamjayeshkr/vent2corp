@@ -142,13 +142,12 @@ export function Sidebar({
           <p className="text-[11px] text-gray-400 leading-relaxed font-sans">
             Unlock unlimited translations, custom tones, templates and more.
           </p>
-          <button
-            type="button"
-            onClick={onOpenAuth}
-            className="w-full h-8 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs transition-colors shadow-md shadow-purple-900/40"
+          <Link
+            href="/checkout"
+            className="flex h-8 w-full items-center justify-center rounded-xl bg-purple-600 text-xs font-medium text-white shadow-md shadow-purple-900/40 transition-colors hover:bg-purple-500"
           >
             Upgrade Now
-          </button>
+          </Link>
         </div>
 
         {/* User Profile Card */}

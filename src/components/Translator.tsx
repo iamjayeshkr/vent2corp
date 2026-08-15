@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Copy,
   Check,
@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { Tone, Recipient, Platform, TranslationResult } from "@/types";
+import { triggerHaptic } from "@/lib/mobile/capacitor";
 
 interface TranslatorProps {
   defaultTone: Tone;
@@ -38,6 +39,8 @@ interface TranslatorProps {
   setRecipient: (r: Recipient) => void;
   platform: Platform;
   setPlatform: (p: Platform) => void;
+  onBindTrigger?: (fn: () => void) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const SAMPLE_PROMPTS = [
@@ -53,6 +56,8 @@ export function Translator({
   tone,
   recipient,
   platform,
+  onBindTrigger,
+  onLoadingChange,
 }: TranslatorProps) {
   const [input, setInput] = useState(
     "tera marad hun kya saale jab dekho tab bula leta hai kuch bhi hua jayesh yeh dekhna bc itni toh biwi ko nhi khojta jitna mujhe bulata hai bsdk sudhar ja daily naya requirement yeh nayi woh nhi hua gand mein ghus ja bsdk"
@@ -71,7 +76,9 @@ export function Translator({
 
   const handleExecuteTranslate = useCallback(async () => {
     if (!input.trim()) return;
+    void triggerHaptic("medium");
     setLoading(true);
+    if (onLoadingChange) onLoadingChange(true);
     setError("");
     try {
       const jwtToken = localStorage.getItem("vent2corp_token");
@@ -104,8 +111,15 @@ export function Translator({
       setError(err instanceof Error ? err.message : "Something went wrong. Give it another shot.");
     } finally {
       setLoading(false);
+      if (onLoadingChange) onLoadingChange(false);
     }
-  }, [input, tone, recipient, platform, onTranslate, onRequireAuth]);
+  }, [input, tone, recipient, platform, onTranslate, onRequireAuth, onLoadingChange]);
+
+  useEffect(() => {
+    if (onBindTrigger) {
+      onBindTrigger(handleExecuteTranslate);
+    }
+  }, [onBindTrigger, handleExecuteTranslate]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -124,6 +138,7 @@ export function Translator({
   const handleAction = async (action: "regenerate" | "shorter" | "more-professional" | "more-direct" | "softer") => {
     if (!input.trim() || !result?.message) return;
     setLoading(true);
+    if (onLoadingChange) onLoadingChange(true);
     setError("");
     try {
       const jwtToken = localStorage.getItem("vent2corp_token");
@@ -163,6 +178,7 @@ export function Translator({
       setError(err instanceof Error ? err.message : "Something went wrong. Give it another shot.");
     } finally {
       setLoading(false);
+      if (onLoadingChange) onLoadingChange(false);
     }
   };
 
@@ -247,6 +263,7 @@ export function Translator({
             </div>
 
             <button
+              id="center-translate-btn"
               type="button"
               onClick={handleExecuteTranslate}
               disabled={loading || !input.trim()}
@@ -328,7 +345,20 @@ export function Translator({
         </div>
 
         {error && (
-          <p className="mt-4 text-xs text-destructive text-center font-mono font-medium">{error}</p>
+          <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-500/80 text-amber-900 dark:text-amber-200 text-center font-sans space-y-3 shadow-[4px_4px_0_#d97706]">
+            <p className="text-xs font-mono font-bold">{error}</p>
+            {error.toLowerCase().includes("daily limit") && (
+              <div className="pt-1">
+                <a
+                  href="/checkout"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-950 hover:bg-gray-800 text-white font-mono font-bold text-xs shadow-md transition-transform hover:scale-105"
+                >
+                  <span>Upgrade to Pro for Unlimited Translations</span>
+                  <ArrowRight className="w-4 h-4 text-yellow-400" />
+                </a>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
