@@ -1,49 +1,54 @@
 "use client";
 
-import { Terminal, ShieldCheck, Code2 } from "lucide-react";
+import Link from "next/link";
+import type { MouseEvent } from "react";
+import { DoodleCurvedArrow, DoodleSparkle } from "@/components/ui/Doodles";
+import type { AuthUser } from "@/components/AuthModal";
 
-export function Footer() {
+interface FooterProps {
+  user?: AuthUser | null;
+  onOpenAuth?: () => void;
+}
+
+export function Footer({ user = null, onOpenAuth }: FooterProps) {
+  const requireAuthForModule = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (user) return;
+    event.preventDefault();
+    onOpenAuth?.();
+  };
+
   return (
-    <footer className="relative z-10 border-t border-border/80 bg-background/80 backdrop-blur-xl px-4 py-12">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 font-mono text-xs text-muted-foreground">
-        {/* Brand & Tagline */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 font-bold">
-            <Terminal className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="font-bold text-foreground text-sm tracking-tight">
-              vent<span className="text-emerald-500">2corp</span> <span className="text-[10px] text-muted-foreground font-normal">v2.0</span>
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              Unfiltered thoughts converted into workplace alignment.
-            </p>
-          </div>
+    <footer className="relative border-t-2 border-gray-200 py-12 px-4 sm:px-6 lg:px-8 bg-white text-gray-950 select-none">
+      <div className="mx-auto mb-9 flex max-w-7xl items-center justify-center gap-2 border-b border-yellow-300 pb-6 sm:justify-end">
+        <DoodleSparkle className="h-5 w-5 text-[#FACC15]" />
+        <span className="font-handwritten text-lg font-bold text-gray-950">for surviving corporate life, one message at a time.</span>
+        <DoodleCurvedArrow className="h-5 w-5 text-[#2563EB]" rotation={15} />
+      </div>
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Brand Header */}
+        <div className="flex flex-col items-center md:items-start gap-0.5">
+          <Link href="/" className="text-2xl font-black font-sans tracking-tight text-gray-950">
+            vent<span className="text-[#2563EB]">2</span>corp
+          </Link>
+          <p className="text-xs text-gray-500 font-sans">
+            say it raw, send it right.
+          </p>
         </div>
 
-        {/* Status Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[11px]">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-          <span>All AI Engines Operational · Gemini 2.5 & Qwen 2.5</span>
+        {/* Navigation Links */}
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-bold text-gray-800 font-sans">
+          <a href="#features" className="hover:text-[#2563EB] transition-colors">Features</a>
+          <Link href="/examples" onClick={requireAuthForModule} className="hover:text-[#2563EB] transition-colors">Examples</Link>
+          <Link href="/tone-lab" onClick={requireAuthForModule} className="hover:text-[#2563EB] transition-colors">Tone Lab</Link>
+          <a href="#how-it-works" className="hover:text-[#2563EB] transition-colors">How it works</a>
+          <a href="#pricing" className="hover:text-[#2563EB] transition-colors">Pricing</a>
+          <Link href="/settings" className="hover:text-[#2563EB] transition-colors">Privacy</Link>
+          <Link href="/settings" className="hover:text-[#2563EB] transition-colors">Terms</Link>
         </div>
 
-        {/* Links & Copyright */}
-        <div className="flex items-center gap-4 text-[11px]">
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> 100% Private & Safe
-          </span>
-          <span>·</span>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            <Code2 className="w-3.5 h-3.5" /> Source
-          </a>
+        {/* Copyright */}
+        <div className="text-xs text-gray-500 font-mono">
+          © {new Date().getFullYear()} vent2corp. All rights reserved.
         </div>
       </div>
     </footer>

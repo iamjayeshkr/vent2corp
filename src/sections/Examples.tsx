@@ -1,148 +1,180 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { TONES } from "@/types";
-import type { Tone } from "@/types";
-import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Copy, Check } from "lucide-react";
+import { DoodleSparkle, DoodleCheckMark, DoodleArrow, DoodleCrown, DoodleConfused, DoodleLightning, DoodleNervous } from "@/components/ui/Doodles";
+import { CorporateMessageBubble, RawMessageBubble } from "@/components/illustrations";
 
-const EXAMPLES = [
+interface ExampleCard {
+  id: string;
+  category: string;
+  raw: string;
+  corporate: string;
+  tone: string;
+  recipient: string;
+  platform: string;
+  rotate: string;
+}
+
+const GALLERY_EXAMPLES: ExampleCard[] = [
   {
-    raw: "abe chutiya hai kya?? kuch bhi requiement bhej raha hai soch toh le ek baar",
-    outputs: {
-      professional:
-        "I wanted to suggest that we carefully review and validate the current requirements before proceeding further, as some of the recent updates seem inconsistent with our scope.",
-      polite:
-        "I hope you don't mind me bringing this up, but I noticed a few discrepancies in the latest requirements. Would it be possible to review them together when you have a moment?",
-      friendly:
-        "Hey! The requirements have been shifting quite a bit lately and it's getting tricky to keep up. Mind if we jump on a quick sync to lock them in?",
-      firm: "The requirements being submitted lack proper vetting and alignment. We need to conduct a formal scope review and freeze requirements before continuing work.",
-      diplomatic:
-        "I wanted to flag that the recent changes to the brief may introduce some complexity. Perhaps we could align on the core priorities to ensure we're delivering effectively.",
-      "passive-aggressive":
-        "I noticed another set of requirements was sent over. Just wanted to confirm if these supersedes the previous brief, or if we should expect another update tomorrow?",
-    },
+    id: "g-1",
+    category: "Manager",
+    raw: "bhai ye kaam kal tak kaise hoga jab requirement aaj mili hai",
+    corporate: "Since the requirement was shared today, I may need some additional time to complete it properly. Could we align on a realistic timeline?",
+    tone: "Firm",
+    recipient: "Manager",
+    platform: "Slack",
+    rotate: "-rotate-1",
   },
   {
-    raw: "jaldi kar bhai client sar pe khada hai",
-    outputs: {
-      professional:
-        "Could we please prioritize this deliverable at the earliest? The client is currently awaiting an update on our progress.",
-      polite:
-        "I hope you're doing well! The client is currently following up on this deliverable, so I kindly wanted to ask if we could expedite it when possible.",
-      friendly:
-        "Hey! The client is waiting on this one—mind bumping it up the queue? Would really appreciate your quick turnaround!",
-      firm: "This deliverable needs immediate prioritization. Client expectations are at risk, and delays will impact our standing.",
-      diplomatic:
-        "I wanted to surface that the client has requested an immediate status update on this. Bumping this up our list will help maintain a strong working relationship.",
-      "passive-aggressive":
-        "Just a gentle reminder that the client is still awaiting this update. I'm sure it's at the top of your queue.",
-    },
+    id: "g-2",
+    category: "Technical",
+    raw: "kitni baar same bug explain karu",
+    corporate: "I've already shared the details around this issue, but it may be worth reviewing them once more so we can avoid going in circles.",
+    tone: "Firm",
+    recipient: "Coworker",
+    platform: "Email",
+    rotate: "rotate-1",
   },
   {
-    raw: "kya bakwas kaam bana ke bheja hai",
-    outputs: {
-      professional:
-        "I believe the current deliverable requires additional refinement to meet our quality benchmarks. Let's schedule a review to walk through the necessary adjustments.",
-      polite:
-        "Thank you for sending this over. I noticed a few areas that could use some polishing to better align with our standards. Could we review them together?",
-      friendly:
-        "Hey, thanks for putting this together! It needs a quick extra pass to match what we discussed—want to go over it real quick?",
-      firm: "The quality of the current output does not meet our agreed standards. Please revise it according to the initial specifications immediately.",
-      diplomatic:
-        "I wanted to share some feedback on the latest draft. A few targeted improvements will significantly enhance the final output.",
-      "passive-aggressive":
-        "I reviewed the submission and noticed several deviations from the original brief. I'm assuming this was a rough draft.",
-    },
+    id: "g-3",
+    category: "Client",
+    raw: "client roz scope badha raha hai",
+    corporate: "The scope has expanded several times, so I'd suggest we finalize the current requirements before taking on additional changes.",
+    tone: "Diplomatic",
+    recipient: "Client",
+    platform: "Email",
+    rotate: "-rotate-2",
+  },
+  {
+    id: "g-4",
+    category: "Requirements",
+    raw: "mujhe ye requirement samajh nhi aa rahi",
+    corporate: "I want to make sure I understand the requirement correctly before proceeding. Could we clarify the expected outcome and acceptance criteria?",
+    tone: "Professional",
+    recipient: "Manager",
+    platform: "Slack",
+    rotate: "rotate-2",
   },
 ];
 
+const TABS = ["All", "Manager", "Client", "Technical", "Requirements"];
+
 export function Examples() {
-  const [activeTone, setActiveTone] = useState<Tone>("professional");
+  const [activeTab, setActiveTab] = useState("All");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filtered = GALLERY_EXAMPLES.filter(
+    (item) => activeTab === "All" || item.category === activeTab
+  );
+
+  const handleCopy = async (id: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   return (
-    <section id="examples" className="px-4 py-20 sm:py-28 relative">
-      <div className="max-w-5xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Real Transformations
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Same raw thought. Perfect delivery.
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Select a tone below to see how raw thoughts adapt seamlessly.
-          </p>
+    <section id="examples" className="bg-white py-[clamp(7rem,12vw,13rem)] px-4 select-none sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1320px] space-y-12 text-left">
+      <div className="space-y-2">
+        <div className="inline-block px-3 py-1 rounded-md bg-[#FACC15] text-gray-950 font-extrabold text-xs font-mono uppercase">
+          SEE IT IN ACTION
         </div>
+        <h2 className="examples-title font-display text-gray-950">
+          FROM:
+          <br />
+          &ldquo;I REALLY WANT
+          <br />
+          TO SAY THIS&rdquo;
+          <br />
+          <span className="desktop-blue-note text-[#2563EB]">TO: &ldquo;THIS WILL PROBABLY BE FINE.&rdquo;</span>
+        </h2>
+      </div>
 
-        {/* Tone Selector Pills */}
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {TONES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setActiveTone(t.value)}
-              className={`px-4 py-2 text-xs sm:text-sm font-medium rounded-full border transition-all duration-200 ${
-                activeTone === t.value
-                  ? "bg-foreground text-background border-foreground shadow-md scale-105"
-                  : "bg-background/60 backdrop-blur-sm text-muted-foreground border-border/80 hover:border-foreground/30 hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+              activeTab === tab
+                ? "bg-[#2563EB] text-white shadow-md"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-        {/* Example Cards */}
-        <div className="space-y-6">
-          {EXAMPLES.map((example, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-border/80 bg-background/70 backdrop-blur-xl shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-border/60 transition-all hover:border-foreground/20"
-            >
-              {/* Raw Input Side */}
-              <div className="p-6 sm:p-7 flex flex-col justify-between bg-amber-500/[0.02]">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="h-2 w-2 rounded-full bg-amber-400" />
-                    <span className="text-xs font-mono font-semibold uppercase tracking-wider text-amber-500 dark:text-amber-400">
-                      Raw Thought
-                    </span>
-                  </div>
-                  <p className="text-base sm:text-lg font-medium text-foreground leading-snug">
-                    &ldquo;{example.raw}&rdquo;
-                  </p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-border/40 text-[11px] font-mono text-muted-foreground flex items-center gap-1">
-                  <span>Input Language: Hinglish / Slang</span>
+      {/* A stable gallery frame keeps the examples easy to compare. */}
+      <div className="example-card-rail grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
+        {filtered.map((item, idx) => {
+          const ExampleDoodle = [DoodleCrown, DoodleNervous, DoodleLightning, DoodleConfused][idx % 4];
+          return (
+          <div
+            key={item.id}
+            className="example-card-rail-item example-gallery-card relative flex min-h-[27rem] flex-col justify-between space-y-4 rounded-3xl border-2 border-gray-950 bg-white p-6 shadow-[4px_5px_0_rgb(24_24_27_/_0.12)] transition-all hover:-translate-y-1 hover:shadow-[6px_8px_0_rgb(24_24_27_/_0.16)]"
+          >
+
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800 font-mono">
+                  {item.category}
+                </span>
+                <div className="flex items-center gap-2">
+                  <ExampleDoodle className="h-9 w-10 text-[#2563EB]" rotation={idx % 2 ? 8 : -8} strokeWidth={2.6} />
+                  <span className="text-[11px] font-mono font-bold text-gray-500">
+                    {item.tone} · {item.recipient} · {item.platform}
+                  </span>
                 </div>
               </div>
 
-              {/* Corporate Output Side */}
-              <div className="p-6 sm:p-7 flex flex-col justify-between bg-emerald-500/[0.02]">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-500 dark:text-emerald-400 flex items-center gap-1">
-                        Corporate Version
-                      </span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs font-normal">
-                      {TONES.find((t) => t.value === activeTone)?.label}
-                    </Badge>
-                  </div>
-                  <p className="text-base sm:text-lg font-normal text-muted-foreground leading-relaxed transition-all">
-                    {example.outputs[activeTone]}
-                  </p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-border/40 text-[11px] font-mono text-emerald-500 dark:text-emerald-400 flex items-center gap-1">
-                  <ArrowRight className="w-3.5 h-3.5" /> HR Approved & Workplace Ready
-                </div>
+              <RawMessageBubble className="rounded-2xl">
+                <span className="text-[10px] font-bold font-mono text-pink-700 block mb-1">RAW</span>
+                <p className="text-xs font-sans font-bold text-gray-950 italic">&ldquo;{item.raw}&rdquo;</p>
+              </RawMessageBubble>
+
+              <div className="flex h-5 items-center justify-center">
+                <DoodleArrow className="h-5 w-12 text-[#2563EB]" rotation={90} strokeWidth={2.8} />
               </div>
+
+              <CorporateMessageBubble className="rounded-2xl">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold font-mono text-emerald-700">CORPORATE</span>
+                  <DoodleCheckMark className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-xs font-sans font-medium text-gray-950 leading-relaxed">{item.corporate}</p>
+              </CorporateMessageBubble>
             </div>
-          ))}
-        </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <Link
+                href={`/new?raw=${encodeURIComponent(item.raw)}`}
+                className="px-4 py-2 rounded-xl bg-[#FACC15] hover:bg-[#EAB308] text-gray-950 font-extrabold text-xs flex items-center gap-1.5 shadow-2xs"
+              >
+                <DoodleSparkle className="w-4 h-4 text-gray-950" />
+                TRY THIS →
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => handleCopy(item.id, item.corporate)}
+                className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-950 border border-gray-300 flex items-center gap-1"
+              >
+                {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedId === item.id ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+          );
+        })}
+      </div>
       </div>
     </section>
   );

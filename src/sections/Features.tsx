@@ -1,148 +1,138 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Languages, MessageCircle, ShieldCheck, Smartphone, Sparkles, Cpu, Zap } from "lucide-react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { UserCheck, Shield, Users, HeartHandshake, Code, Briefcase, MessageSquare, Mail, Send, Globe } from "lucide-react";
 
-gsap.registerPlugin(ScrollTrigger);
+const USE_CASES = [
+  {
+    title: "Managers",
+    desc: "Say something difficult without making it awkward or demotivating team members.",
+    icon: UserCheck,
+  },
+  {
+    title: "Clients",
+    desc: "Push back on unvetted requirement scope without sounding defensive or confrontational.",
+    icon: Shield,
+  },
+  {
+    title: "Coworkers",
+    desc: "Ask someone to fix something broken or missing without starting a Slack flame war.",
+    icon: Users,
+  },
+  {
+    title: "HR Team",
+    desc: "Communicate appraisal, leave, or policy concerns clearly without overexplaining.",
+    icon: HeartHandshake,
+  },
+  {
+    title: "Developers",
+    desc: "Turn technical frustration about buggy APIs and shifting deadlines into clear engineering status updates.",
+    icon: Code,
+  },
+  {
+    title: "Founders",
+    desc: "Say no to low-priority requests without writing a 400-word defensive email.",
+    icon: Briefcase,
+  },
+];
 
-const BENTO_ITEMS = [
+const PLATFORMS = [
   {
-    icon: Languages,
-    title: "Hinglish & Multilingual Engine",
-    description: "Understands Hinglish, casual Hindi, raw English, and workplace slang without needing pre-sanitization.",
-    badge: "AI Powered",
-    color: "from-emerald-500/20 to-emerald-500/5",
-    border: "hover:border-emerald-500/50",
-    iconBg: "bg-emerald-500/10 text-emerald-400",
-    colSpan: "lg:col-span-2",
+    name: "WhatsApp",
+    badge: "short, natural, human",
+    icon: Send,
+    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
   },
   {
-    icon: Sparkles,
-    title: "6 Adaptive Tones",
-    description: "Toggle between Professional, Polite, Friendly, Firm, Diplomatic, or Passive-Aggressive.",
-    badge: "Context Aware",
-    color: "from-amber-500/20 to-amber-500/5",
-    border: "hover:border-amber-500/50",
-    iconBg: "bg-amber-500/10 text-amber-400",
-    colSpan: "lg:col-span-1",
+    name: "Slack",
+    badge: "clear and to the point",
+    icon: MessageSquare,
+    color: "bg-purple-500/10 text-purple-600 border-purple-500/30",
   },
   {
-    icon: MessageCircle,
-    title: "Platform Formatting",
-    description: "Output adjusts automatically for Slack, WhatsApp, Teams, Email (with salutation/closings), or LinkedIn.",
-    badge: "Smart Layout",
-    color: "from-purple-500/20 to-purple-500/5",
-    border: "hover:border-purple-500/50",
-    iconBg: "bg-purple-500/10 text-purple-400",
-    colSpan: "lg:col-span-1",
+    name: "Microsoft Teams",
+    badge: "structured & professional",
+    icon: Users,
+    color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30",
   },
   {
-    icon: ShieldCheck,
-    title: "Meaning Preservation Guarantee",
-    description: "Removes anger, profanity, and toxicity while strictly keeping your core complaint and request intact.",
-    badge: "HR Safe",
-    color: "from-emerald-500/20 to-blue-500/5",
-    border: "hover:border-emerald-500/50",
-    iconBg: "bg-emerald-500/10 text-emerald-400",
-    colSpan: "lg:col-span-2",
+    name: "Email",
+    badge: "formal without sounding robotic",
+    icon: Mail,
+    color: "bg-blue-500/10 text-blue-600 border-blue-500/30",
   },
   {
-    icon: Cpu,
-    title: "Dual AI Fallback Engine",
-    description: "Powered by Google Gemini 2.5 API with instant zero-latency fallback to local Ollama qwen2.5:3b.",
-    badge: "Reliable & Fast",
-    color: "from-amber-500/20 to-purple-500/5",
-    border: "hover:border-amber-500/50",
-    iconBg: "bg-amber-500/10 text-amber-400",
-    colSpan: "lg:col-span-2",
-  },
-  {
-    icon: Smartphone,
-    title: "Responsive Developer UI",
-    description: "Designed for seamless mobile, tablet, and desktop usage down to 320px screens.",
-    badge: "320px+",
-    color: "from-blue-500/20 to-emerald-500/5",
-    border: "hover:border-blue-500/50",
-    iconBg: "bg-blue-500/10 text-blue-400",
-    colSpan: "lg:col-span-1",
+    name: "LinkedIn",
+    badge: "network appropriate & polished",
+    icon: Globe,
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/30",
   },
 ];
 
 export function Features() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".bento-card",
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.12,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 80%",
-          },
-        }
-      );
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <section id="features" ref={containerRef} className="px-4 py-20 sm:py-28 relative">
-      <div className="max-w-6xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-4">
-            <Zap className="w-3.5 h-3.5" /> Built for Modern Teams
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Engineered for workplace clarity.
+    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 select-none">
+      {/* Section 6: Use-Cases */}
+      <div className="space-y-8">
+        <div className="text-center space-y-2 max-w-3xl mx-auto">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+            Real Work Scenarios
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-bold font-handwritten text-foreground tracking-wide">
+            built for the way people actually work.
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Everything you need to navigate delicate corporate conversations with confidence.
+          <p className="text-xs sm:text-sm text-muted-foreground font-sans">
+            Whether you&apos;re negotiating deadlines, pushing back on scope, or requesting clarity—vent2corp handles every angle.
           </p>
         </div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {BENTO_ITEMS.map((item, idx) => (
-            <div
-              key={idx}
-              className={`bento-card group relative p-6 sm:p-8 rounded-2xl border border-border/80 bg-background/60 backdrop-blur-xl transition-all duration-300 ${item.border} ${item.colSpan} flex flex-col justify-between overflow-hidden shadow-lg shadow-black/5 hover:-translate-y-1`}
-            >
-              {/* Background Accent Gradient */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {USE_CASES.map((uc) => {
+            const Icon = uc.icon;
+            return (
               <div
-                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
-              />
-
-              <div className="relative z-10">
-                {/* Header Row */}
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg}`}>
-                    <item.icon className="w-5.5 h-5.5" />
-                  </div>
-                  <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full border border-border/60 bg-muted/50 text-muted-foreground">
-                    {item.badge}
-                  </span>
+                key={uc.title}
+                className="p-6 rounded-3xl bg-white dark:bg-[#141923] border border-border/80 shadow-md space-y-3 hover:shadow-xl transition-all"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <Icon className="w-5 h-5" />
                 </div>
-
-                <h3 className="text-lg sm:text-xl font-bold tracking-tight mb-2 group-hover:text-foreground transition-colors">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {item.description}
-                </p>
+                <h3 className="text-lg font-bold font-sans text-foreground">{uc.title}</h3>
+                <p className="text-xs text-muted-foreground font-sans leading-relaxed">{uc.desc}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section 7: Platform Cards */}
+      <div className="space-y-8 pt-6">
+        <div className="text-center space-y-2 max-w-3xl mx-auto">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Multi-Platform Ready
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-bold font-sans text-foreground">
+            works wherever work happens.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {PLATFORMS.map((p) => {
+            const Icon = p.icon;
+            return (
+              <div
+                key={p.name}
+                className="p-5 rounded-3xl bg-white dark:bg-[#141923] border border-border/80 shadow-sm space-y-3 text-center flex flex-col items-center justify-between"
+              >
+                <div className={`w-10 h-10 rounded-2xl ${p.color} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h4 className="text-base font-bold font-sans text-foreground">{p.name}</h4>
+                <span className="text-[10px] font-mono font-bold text-muted-foreground px-2 py-0.5 rounded-full bg-muted/30 border border-border/60">
+                  {p.badge}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
