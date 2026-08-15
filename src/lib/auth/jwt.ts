@@ -1,8 +1,12 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.APP_ACCESS_KEY || "vent2corp_super_secret_jwt_key_2026";
 const JWT_EXPIRES_IN = "7d";
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim() || process.env.APP_ACCESS_KEY?.trim() || "corporate2026";
+  return secret;
+}
 
 export interface JWTPayload {
   userId: string;
@@ -22,12 +26,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 export function signToken(payload: Omit<JWTPayload, "iat" | "exp">): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
     return decoded;
   } catch {
     return null;

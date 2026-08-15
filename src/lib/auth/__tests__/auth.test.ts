@@ -86,4 +86,21 @@ describe("Authentication & Security Module Tests", () => {
     assert.strictEqual(res4.allowed, false, "4th request should exceed limit");
     assert.strictEqual(res4.remaining, 0);
   });
+
+  test("5. Free Tier 10 Daily Translations Limit", () => {
+    const userId = `free_user_daily_${Date.now()}`;
+    const DAILY_LIMIT = 10;
+    const WINDOW_24H = 24 * 60 * 60 * 1000;
+
+    for (let i = 1; i <= DAILY_LIMIT; i++) {
+      const check = checkRateLimit(`daily_usr_${userId}`, DAILY_LIMIT, WINDOW_24H);
+      assert.strictEqual(check.allowed, true, `Request #${i} should be allowed`);
+      assert.strictEqual(check.remaining, DAILY_LIMIT - i);
+    }
+
+    // 11th request must fail
+    const check11 = checkRateLimit(`daily_usr_${userId}`, DAILY_LIMIT, WINDOW_24H);
+    assert.strictEqual(check11.allowed, false, "11th request must hit daily limit");
+    assert.strictEqual(check11.remaining, 0);
+  });
 });
