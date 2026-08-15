@@ -6,6 +6,9 @@ import {
   sendEmailVerification,
   signOut as firebaseSignOut,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+  onAuthStateChanged,
   type User,
   type ActionCodeSettings,
 } from "firebase/auth";
@@ -22,6 +25,8 @@ const firebaseConfig = {
 // Initialize Firebase Client App (Singleton)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 export async function sendVerifiedFirebaseEmail(user: User): Promise<void> {
   const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
@@ -38,5 +43,8 @@ export {
   sendEmailVerification,
   firebaseSignOut,
   updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
   type User,
 };
