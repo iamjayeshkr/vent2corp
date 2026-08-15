@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
@@ -30,16 +30,23 @@ import type {
   Theme,
 } from "@/types";
 
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { MobileAppLayout } from "@/components/mobile/MobileAppLayout";
+
 export default function DashboardPage() {
   const router = useRouter();
+  const { user: currentUser, login, logout: contextLogout } = useAuth();
+  const executeTranslateRef = useRef<(() => void) | null>(null);
+
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [favorites, setFavorites] = useState<HistoryItem[]>([]);
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("light");
+  const [loading, setLoading] = useState(false);
 
   const [tone, setTone] = useState<Tone>("firm");
   const [recipient, setRecipient] = useState<Recipient>("manager");
@@ -53,7 +60,7 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    queueMicrotask(async () => {
+    queueMicrotask(() => {
       setHistory(getHistory());
       setFavorites(getFavorites());
       const s = getSettings();
@@ -61,30 +68,8 @@ export default function DashboardPage() {
       setTone(s.defaultTone || "firm");
       setRecipient(s.defaultRecipient || "manager");
       setPlatform(s.defaultPlatform || "email");
-
-      const token = localStorage.getItem("vent2corp_token");
-      if (!token) {
-        router.push("/?auth=required");
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCurrentUser(data.user);
-        } else {
-          localStorage.removeItem("vent2corp_token");
-          localStorage.removeItem("vent2corp_user");
-          router.push("/?auth=required");
-        }
-      } catch {
-        router.push("/?auth=required");
-      }
     });
-  }, [router]);
+  }, []);
 
   const handleTranslate = useCallback(
     (
@@ -119,7 +104,7 @@ export default function DashboardPage() {
     setHistory([]);
   };
 
-  const handleReopenHistory = (_item: HistoryItem) => {
+  const handleReopenHistory = () => {
     setHistoryOpen(false);
     setTimeout(() => {
       const el = document.getElementById("raw-thought-input");
@@ -148,16 +133,12 @@ export default function DashboardPage() {
   );
 
   const handleAuthSuccess = (token: string, user: AuthUser) => {
-    localStorage.setItem("vent2corp_token", token);
-    localStorage.setItem("vent2corp_user", JSON.stringify(user));
-    setCurrentUser(user);
+    login(token, user);
     setAuthModalOpen(false);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("vent2corp_token");
-    localStorage.removeItem("vent2corp_user");
-    setCurrentUser(null);
+    void contextLogout();
     router.push("/");
   };
 
@@ -171,91 +152,109 @@ export default function DashboardPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row antialiased">
-      {/* Mobile Top Navigation */}
-      <MobileNav
-        user={currentUser}
-        onOpenAuth={() => setAuthModalOpen(true)}
-        onLogout={handleLogout}
-        onOpenSettings={() => setSettingsOpen(true)}
-        onOpenHistory={() => setHistoryOpen(true)}
-      />
+  const handleBindTrigger = useCallback((fn: () => void) => {
+    executeTranslateRef.current = fn;
+  }, []);
 
-      {/* Desktop Left Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar
-          historyCount={history.length}
-          favoritesCount={favorites.length}
-          user={currentUser}
+  return (
+    <ProtectedRoute>
+      {/* Mobile-First App Layout for Mobile Viewports & Native Capacitor */}
+      <div className="block lg:hidden">
+        <MobileAppLayout
           onOpenAuth={() => setAuthModalOpen(true)}
-          onLogout={handleLogout}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenHistory={() => setHistoryOpen(true)}
-          onOpenGlobalSearch={() => setGlobalSearchOpen(true)}
+          onOpenCheckout={() => router.push("/checkout")}
+          history={history}
+          onSelectHistoryItem={handleSelectHistoryItem}
+          onDeleteHistoryItem={handleDeleteHistory}
+          onSaveToHistory={(item) => {
+            const newItem = {
+              id: Date.now().toString(),
+              ...item,
+              timestamp: Date.now(),
+            };
+            setHistory((prev) => [newItem, ...prev]);
+          }}
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        <Header
-          user={currentUser}
-          onOpenAuth={() => setAuthModalOpen(true)}
-          theme={themeMode}
-          onToggleTheme={toggleTheme}
-        />
+      {/* Desktop Multi-Column Layout */}
+      <div className="hidden lg:flex min-h-screen bg-background text-foreground flex-col lg:flex-row antialiased">
+        {/* Desktop Left Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar
+            historyCount={history.length}
+            favoritesCount={favorites.length}
+            user={currentUser}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onLogout={handleLogout}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenHistory={() => setHistoryOpen(true)}
+            onOpenGlobalSearch={() => setGlobalSearchOpen(true)}
+          />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Main Workspace (8 Columns) */}
-          <div className="lg:col-span-8 space-y-6">
-            <Translator
-              defaultTone={settings.defaultTone}
-              defaultRecipient={settings.defaultRecipient}
-              defaultPlatform={settings.defaultPlatform}
-              onTranslate={handleTranslate}
-              onRequireAuth={() => setAuthModalOpen(true)}
-              tone={tone}
-              setTone={setTone}
-              recipient={recipient}
-              setRecipient={setRecipient}
-              platform={platform}
-              setPlatform={setPlatform}
-            />
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <Header
+            user={currentUser}
+            theme={themeMode}
+            onToggleTheme={toggleTheme}
+          />
 
-            <ProBanner onUpgrade={() => setAuthModalOpen(true)} />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Main Workspace (8 Columns) */}
+            <div className="lg:col-span-8 space-y-6">
+              <Translator
+                defaultTone={settings.defaultTone}
+                defaultRecipient={settings.defaultRecipient}
+                defaultPlatform={settings.defaultPlatform}
+                onTranslate={handleTranslate}
+                onRequireAuth={() => setAuthModalOpen(true)}
+                tone={tone}
+                setTone={setTone}
+                recipient={recipient}
+                setRecipient={setRecipient}
+                platform={platform}
+                setPlatform={setPlatform}
+                onBindTrigger={handleBindTrigger}
+                onLoadingChange={setLoading}
+              />
 
-          {/* Right Utility Column (4 Columns) */}
-          <div className="lg:col-span-4">
-            <RightPanel
-              tone={tone}
-              setTone={setTone}
-              recipient={recipient}
-              setRecipient={setRecipient}
-              platform={platform}
-              setPlatform={setPlatform}
-              onTranslate={() => {
-                const el = document.getElementById("raw-thought-input");
-                if (el) {
-                  el.dispatchEvent(new Event("input", { bubbles: true }));
-                  const btn = document.querySelector("button[type='button']") as HTMLButtonElement;
-                  if (btn) btn.click();
-                }
-              }}
-              loading={false}
-              history={history}
-              onSelectHistoryItem={handleSelectHistoryItem}
-              onViewAllHistory={() => router.push("/history")}
-            />
+              <ProBanner onUpgrade={() => router.push("/checkout")} />
+            </div>
+
+            {/* Right Utility Column (4 Columns) */}
+            <div className="lg:col-span-4">
+              <RightPanel
+                tone={tone}
+                setTone={setTone}
+                recipient={recipient}
+                setRecipient={setRecipient}
+                platform={platform}
+                setPlatform={setPlatform}
+                onTranslate={() => {
+                  if (executeTranslateRef.current) {
+                    executeTranslateRef.current();
+                  } else {
+                    const centerBtn = document.getElementById("center-translate-btn");
+                    if (centerBtn) centerBtn.click();
+                  }
+                }}
+                loading={loading}
+                history={history}
+                onSelectHistoryItem={handleSelectHistoryItem}
+                onViewAllHistory={() => router.push("/history")}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Modals & Global Search */}
-      <GlobalSearchModal open={globalSearchOpen} onOpenChange={setGlobalSearchOpen} />
-      <HistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} history={history} onDelete={handleDeleteHistory} onReopen={handleReopenHistory} onClear={handleClearHistory} />
-      <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} theme={settings.theme} defaultTone={settings.defaultTone} defaultRecipient={settings.defaultRecipient} defaultPlatform={settings.defaultPlatform} onUpdate={handleUpdateSettings} />
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} onAuthSuccess={handleAuthSuccess} />
-    </div>
+        {/* Modals & Global Search */}
+        <GlobalSearchModal open={globalSearchOpen} onOpenChange={setGlobalSearchOpen} />
+        <HistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} history={history} onDelete={handleDeleteHistory} onReopen={handleReopenHistory} onClear={handleClearHistory} />
+        <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} theme={settings.theme} defaultTone={settings.defaultTone} defaultRecipient={settings.defaultRecipient} defaultPlatform={settings.defaultPlatform} onUpdate={handleUpdateSettings} />
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} onAuthSuccess={handleAuthSuccess} />
+      </div>
+    </ProtectedRoute>
   );
 }

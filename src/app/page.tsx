@@ -4,15 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
-import { HeroCanvas } from "@/components/canvas/HeroCanvas";
+import { TrustStrip } from "@/sections/TrustStrip";
+import { HowItWorks } from "@/sections/HowItWorks";
+import { ToneLabShowcase } from "@/sections/ToneLabShowcase";
+import { ContextIntelligence } from "@/sections/ContextIntelligence";
+import { UseCases } from "@/sections/UseCases";
+import { Examples } from "@/sections/Examples";
+import { Comparison } from "@/sections/Comparison";
+import { StepFlow } from "@/sections/StepFlow";
+import { PricingSection } from "@/sections/PricingSection";
+import { CTA } from "@/sections/CTA";
+import { Footer } from "@/sections/Footer";
+
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AuthModal, type AuthUser } from "@/components/AuthModal";
-import { Examples } from "@/sections/Examples";
-import { HowItWorks } from "@/sections/HowItWorks";
-import { Features } from "@/sections/Features";
-import { CTA } from "@/sections/CTA";
-import { Footer } from "@/sections/Footer";
+
 import {
   getHistory,
   deleteHistoryItem,
@@ -28,12 +35,14 @@ import type {
   Theme,
 } from "@/types";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function Home() {
   const router = useRouter();
+  const { user: currentUser, login, loading: authLoading, logout: contextLogout } = useAuth();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [settings, setSettings] = useState({
     theme: "system" as Theme,
@@ -43,38 +52,76 @@ export default function Home() {
   });
 
   useEffect(() => {
-    queueMicrotask(async () => {
+    queueMicrotask(() => {
       setHistory(getHistory());
       const s = getSettings();
       setSettings(s);
-
-      // Check query param for auth requirement
-      if (typeof window !== "undefined") {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("auth") === "required") {
-          setAuthModalOpen(true);
-        }
-      }
-
-      // Check stored session
-      const token = localStorage.getItem("vent2corp_token");
-      if (token) {
-        try {
-          const res = await fetch("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setCurrentUser(data.user);
-          } else {
-            localStorage.removeItem("vent2corp_token");
-            localStorage.removeItem("vent2corp_user");
-          }
-        } catch {
-          // Keep offline state
-        }
-      }
     });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || authLoading) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAuthRequired = urlParams.get("auth") === "required";
+    const nextUrl = urlParams.get("next");
+
+    if (currentUser) {
+      setAuthModalOpen(false);
+      if (isAuthRequired) {
+        const destination = nextUrl && nextUrl.startsWith("/") && !nextUrl.startsWith("//") ? nextUrl : "/dashboard";
+        router.push(destination);
+      }
+    } else if (isAuthRequired) {
+      setAuthModalOpen(true);
+    }
+  }, [currentUser, authLoading, router]);
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("main > section, main > div"));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const motionItems = ".paper-object, .rant-note, .tone-rail-card, .scenario-rail-card, .example-card-rail-item, .step-flow-card, .platform-rail-card";
+    const items: HTMLElement[] = [];
+
+    sections.forEach((section) => {
+      section.classList.add("landing-reveal");
+      if (section.id === "hero") return;
+
+      section.querySelectorAll<HTMLElement>(motionItems).forEach((item, index) => {
+        item.classList.add("landing-item-reveal");
+        item.style.setProperty("--landing-item-delay", `${Math.min(index, 5) * 70}ms`);
+        items.push(item);
+      });
+    });
+    if (reducedMotion || !("IntersectionObserver" in window)) {
+      sections.forEach((section) => section.classList.add("is-visible"));
+      items.forEach((item) => item.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.08, rootMargin: "0px 0px -4%" }
+    );
+    const itemObserver = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          itemObserver.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.2, rootMargin: "0px 0px -8%" }
+    );
+    sections.forEach((section) => observer.observe(section));
+    items.forEach((item) => itemObserver.observe(item));
+    return () => {
+      observer.disconnect();
+      itemObserver.disconnect();
+    };
   }, []);
 
   const handleDeleteHistory = (id: string) => {
@@ -87,7 +134,7 @@ export default function Home() {
     setHistory([]);
   };
 
-  const handleReopenHistory = (_item: HistoryItem) => {
+  const handleReopenHistory = () => {
     setHistoryOpen(false);
     if (currentUser) {
       router.push("/dashboard");
@@ -114,24 +161,18 @@ export default function Home() {
   };
 
   const handleAuthSuccess = (token: string, user: AuthUser) => {
-    localStorage.setItem("vent2corp_token", token);
-    localStorage.setItem("vent2corp_user", JSON.stringify(user));
-    setCurrentUser(user);
+    login(token, user);
     setAuthModalOpen(false);
-    router.push("/dashboard");
+    const next = new URLSearchParams(window.location.search).get("next");
+    router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("vent2corp_token");
-    localStorage.removeItem("vent2corp_user");
-    setCurrentUser(null);
+    void contextLogout();
   };
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground selection:bg-purple-500/20 selection:text-purple-600">
-      {/* Interactive 3D WebGL Background */}
-      <HeroCanvas />
-
+    <div className="min-h-screen bg-white text-gray-950 font-sans selection:bg-yellow-300 selection:text-gray-950">
       <Navigation
         onOpenHistory={() => setHistoryOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -140,15 +181,21 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      <main className="relative z-10 flex-1">
+      <main className="landing-main relative z-10 flex-1 space-y-12">
         <Hero onStartTranslating={handleStartTranslating} />
-        <Examples />
+        <TrustStrip />
         <HowItWorks />
-        <Features />
+        <ToneLabShowcase />
+        <ContextIntelligence />
+        <UseCases />
+        <Examples />
+        <Comparison />
+        <StepFlow />
+        <PricingSection />
         <CTA />
       </main>
 
-      <Footer />
+      <Footer user={currentUser} onOpenAuth={() => setAuthModalOpen(true)} />
 
       <HistoryPanel
         open={historyOpen}

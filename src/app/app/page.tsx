@@ -28,13 +28,16 @@ import type {
   Theme,
 } from "@/types";
 
+import { useAuth } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+
 export default function AppWorkspace() {
   const router = useRouter();
+  const { user: currentUser, login, logout: contextLogout } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("light");
 
@@ -50,37 +53,15 @@ export default function AppWorkspace() {
   });
 
   useEffect(() => {
-    queueMicrotask(async () => {
+    queueMicrotask(() => {
       setHistory(getHistory());
       const s = getSettings();
       setSettings(s);
       setTone(s.defaultTone || "firm");
       setRecipient(s.defaultRecipient || "manager");
       setPlatform(s.defaultPlatform || "email");
-
-      const token = localStorage.getItem("vent2corp_token");
-      if (!token) {
-        router.push("/?auth=required");
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCurrentUser(data.user);
-        } else {
-          localStorage.removeItem("vent2corp_token");
-          localStorage.removeItem("vent2corp_user");
-          router.push("/?auth=required");
-        }
-      } catch {
-        router.push("/?auth=required");
-      }
     });
-  }, [router]);
+  }, []);
 
   const handleTranslate = useCallback(
     (
@@ -115,7 +96,7 @@ export default function AppWorkspace() {
     setHistory([]);
   };
 
-  const handleReopenHistory = (_item: HistoryItem) => {
+  const handleReopenHistory = () => {
     setHistoryOpen(false);
     setTimeout(() => {
       const el = document.getElementById("raw-thought-input");
@@ -144,16 +125,12 @@ export default function AppWorkspace() {
   );
 
   const handleAuthSuccess = (token: string, user: AuthUser) => {
-    localStorage.setItem("vent2corp_token", token);
-    localStorage.setItem("vent2corp_user", JSON.stringify(user));
-    setCurrentUser(user);
+    login(token, user);
     setAuthModalOpen(false);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("vent2corp_token");
-    localStorage.removeItem("vent2corp_user");
-    setCurrentUser(null);
+    void contextLogout();
     router.push("/");
   };
 
@@ -168,113 +145,114 @@ export default function AppWorkspace() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row antialiased">
-      {/* Mobile Top Navigation */}
-      <MobileNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        user={currentUser}
-        onOpenAuth={() => setAuthModalOpen(true)}
-        onLogout={handleLogout}
-        onOpenSettings={() => setSettingsOpen(true)}
-        onOpenHistory={() => setHistoryOpen(true)}
-      />
-
-      {/* Desktop Left Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row antialiased">
+        {/* Mobile Top Navigation */}
+        <MobileNav
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          historyCount={history.length}
-          favoritesCount={6}
           user={currentUser}
           onOpenAuth={() => setAuthModalOpen(true)}
           onLogout={handleLogout}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenHistory={() => setHistoryOpen(true)}
         />
-      </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        <Header
-          user={currentUser}
-          onOpenAuth={() => setAuthModalOpen(true)}
-          theme={themeMode}
-          onToggleTheme={toggleTheme}
-        />
+        {/* Desktop Left Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            historyCount={history.length}
+            favoritesCount={6}
+            user={currentUser}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onLogout={handleLogout}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenHistory={() => setHistoryOpen(true)}
+          />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Main Translation Workspace (8 Columns) */}
-          <div className="lg:col-span-8 space-y-6">
-            <Translator
-              defaultTone={settings.defaultTone}
-              defaultRecipient={settings.defaultRecipient}
-              defaultPlatform={settings.defaultPlatform}
-              onTranslate={handleTranslate}
-              onRequireAuth={() => setAuthModalOpen(true)}
-              tone={tone}
-              setTone={setTone}
-              recipient={recipient}
-              setRecipient={setRecipient}
-              platform={platform}
-              setPlatform={setPlatform}
-            />
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+          <Header
+            user={currentUser}
+            theme={themeMode}
+            onToggleTheme={toggleTheme}
+          />
 
-            <ProBanner onUpgrade={() => setAuthModalOpen(true)} />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Main Translation Workspace (8 Columns) */}
+            <div className="lg:col-span-8 space-y-6">
+              <Translator
+                defaultTone={settings.defaultTone}
+                defaultRecipient={settings.defaultRecipient}
+                defaultPlatform={settings.defaultPlatform}
+                onTranslate={handleTranslate}
+                onRequireAuth={() => setAuthModalOpen(true)}
+                tone={tone}
+                setTone={setTone}
+                recipient={recipient}
+                setRecipient={setRecipient}
+                platform={platform}
+                setPlatform={setPlatform}
+              />
 
-          {/* Right Utility Column (4 Columns) */}
-          <div className="lg:col-span-4">
-            <RightPanel
-              tone={tone}
-              setTone={setTone}
-              recipient={recipient}
-              setRecipient={setRecipient}
-              platform={platform}
-              setPlatform={setPlatform}
-              onTranslate={() => {
-                const el = document.getElementById("raw-thought-input");
-                if (el) {
-                  el.dispatchEvent(new Event("input", { bubbles: true }));
-                  const btn = document.querySelector("button[type='button']") as HTMLButtonElement;
-                  if (btn) btn.click();
-                }
-              }}
-              loading={false}
-              history={history}
-              onSelectHistoryItem={handleSelectHistoryItem}
-              onViewAllHistory={() => setHistoryOpen(true)}
-            />
+              <ProBanner onUpgrade={() => router.push("/checkout")} />
+            </div>
+
+            {/* Right Utility Column (4 Columns) */}
+            <div className="lg:col-span-4">
+              <RightPanel
+                tone={tone}
+                setTone={setTone}
+                recipient={recipient}
+                setRecipient={setRecipient}
+                platform={platform}
+                setPlatform={setPlatform}
+                onTranslate={() => {
+                  const el = document.getElementById("raw-thought-input");
+                  if (el) {
+                    el.dispatchEvent(new Event("input", { bubbles: true }));
+                    const btn = document.querySelector("button[type='button']") as HTMLButtonElement;
+                    if (btn) btn.click();
+                  }
+                }}
+                loading={false}
+                history={history}
+                onSelectHistoryItem={handleSelectHistoryItem}
+                onViewAllHistory={() => setHistoryOpen(true)}
+              />
+            </div>
           </div>
         </div>
+
+        {/* Modals & Slide-overs */}
+        <HistoryPanel
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          history={history}
+          onDelete={handleDeleteHistory}
+          onReopen={handleReopenHistory}
+          onClear={handleClearHistory}
+        />
+
+        <SettingsPanel
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          theme={settings.theme}
+          defaultTone={settings.defaultTone}
+          defaultRecipient={settings.defaultRecipient}
+          defaultPlatform={settings.defaultPlatform}
+          onUpdate={handleUpdateSettings}
+        />
+
+        <AuthModal
+          open={authModalOpen}
+          onOpenChange={setAuthModalOpen}
+          onAuthSuccess={handleAuthSuccess}
+        />
       </div>
-
-      {/* Modals & Slide-overs */}
-      <HistoryPanel
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        history={history}
-        onDelete={handleDeleteHistory}
-        onReopen={handleReopenHistory}
-        onClear={handleClearHistory}
-      />
-
-      <SettingsPanel
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        theme={settings.theme}
-        defaultTone={settings.defaultTone}
-        defaultRecipient={settings.defaultRecipient}
-        defaultPlatform={settings.defaultPlatform}
-        onUpdate={handleUpdateSettings}
-      />
-
-      <AuthModal
-        open={authModalOpen}
-        onOpenChange={setAuthModalOpen}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    </div>
+    </ProtectedRoute>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, Caveat } from "next/font/google";
+import { Anton, Caveat, Inter } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,10 +16,18 @@ const caveat = Caveat({
   weight: ["400", "500", "600", "700"],
 });
 
+const anton = Anton({
+  weight: "400",
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://vent2corp.com"),
   title: "vent2corp | say it raw, send it right.",
   description:
-    "Turn your unfiltered thoughts, Hinglish vents, and raw frustration into clean, professional workplace communications.",
+    "Turn your unfiltered thoughts, Hinglish rants and workplace frustration into professional messages you can actually send.",
   openGraph: {
     title: "vent2corp | say it raw, send it right.",
     description:
@@ -40,11 +49,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${caveat.variable} h-full antialiased`}
+      className={`${inter.variable} ${caveat.variable} ${anton.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-purple-500/20 selection:text-purple-600">
-        {children}
+      <body className="min-h-full flex flex-col font-sans bg-white text-gray-950 selection:bg-yellow-300 selection:text-gray-950">
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
