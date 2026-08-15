@@ -55,6 +55,8 @@ export interface AIProvider {
   translate(request: TranslationRequest): Promise<TranslationResult>;
 }
 
+export type Length = "short" | "normal" | "detailed";
+
 export interface HistoryItem {
   id: string;
   original: string;
@@ -63,6 +65,7 @@ export interface HistoryItem {
   recipient: Recipient;
   platform: Platform;
   timestamp: number;
+  isFavorite?: boolean;
 }
 
 export interface UserSettings {
@@ -97,4 +100,10 @@ export const PLATFORMS: { value: Platform; label: string }[] = [
   { value: "teams", label: "Microsoft Teams" },
   { value: "email", label: "Email" },
   { value: "linkedin", label: "LinkedIn" },
+];
+
+export const LENGTHS: { value: Length; label: string }[] = [
+  { value: "short", label: "Short & Punchy" },
+  { value: "normal", label: "Normal (Recommended)" },
+  { value: "detailed", label: "Detailed & Contextual" },
 ];
